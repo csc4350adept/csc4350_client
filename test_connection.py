@@ -1,20 +1,22 @@
 import socket
 import ssl
 import time
+import sys
 
 host = 'localhost'
-port = 465
+port = 993
+#993 for imap
 
 socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket.settimeout(5)
 ssl_socket = ssl.wrap_socket(socket, ssl_version=ssl.PROTOCOL_TLSv1)
 ssl_socket.connect((host, port))
 
-msg = 'hello world\nmulti-line input\ngoodbye world\n'
-msg2 = 'this is a second message\nit has super secret stuff in it'
+msg = 'LOGIN ebull foobar\n'
 
-ssl_socket.send(msg)
-time.sleep(5)
-ssl_socket.send(msg2)
+ssl_socket.write(msg)
+time.sleep(1)
+resp = ssl_socket.read()
+print resp
 
 ssl_socket.close()
