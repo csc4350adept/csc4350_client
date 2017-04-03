@@ -10,6 +10,7 @@ public class Client {
 	
 	public Client() {
 		this.isAuthenticated = false;
+		
 		//Check to see if the SQLite db exists
 		//If it does not exist, create it
 		String path = Client.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -29,7 +30,6 @@ public class Client {
 		if(dbPath.startsWith("/")) {
 			dbPath = dbPath.substring(1);
 		}
-		//dbPath = "jdbc:sqlite:C:/Users/ebull_000/Documents/GitHub/csc4350_client/bin/db/localdb.db";
 		System.out.println(dbPath);
 		if (!f.exists()) {
 			//Create SQLite database
@@ -55,6 +55,13 @@ public class Client {
 	
 	public boolean checkAuth() {
 		return this.isAuthenticated;
+	}
+	
+	public boolean authenticate(Authenticate.proto proto, String uname, String pword) throws FeedbackException {
+		Authenticate a = new Authenticate(uname, pword);
+		this.isAuthenticated = a.chkCreds(proto);
+		if (!this.isAuthenticated) throw new FeedbackException(a.getResp());
+		else return true;
 	}
 	
 	
