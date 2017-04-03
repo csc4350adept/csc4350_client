@@ -26,7 +26,10 @@ public class Client {
 		System.out.println(dir.exists());
 		File f = new File(decodedPath + defaultSQLitePath);
 		String dbPath = "jdbc:sqlite:" + decodedPath + defaultSQLitePath;
-		dbPath = "jdbc:sqlite:C:/Users/ebull_000/Documents/GitHub/csc4350_client/bin/db/localdb.db";
+		if(dbPath.startsWith("/")) {
+			dbPath = dbPath.substring(1);
+		}
+		//dbPath = "jdbc:sqlite:C:/Users/ebull_000/Documents/GitHub/csc4350_client/bin/db/localdb.db";
 		System.out.println(dbPath);
 		if (!f.exists()) {
 			//Create SQLite database
@@ -35,6 +38,7 @@ public class Client {
 				DatabaseMetaData meta = this.dbConn.getMetaData();
 				System.out.println("The driver name is " + meta.getDriverName());
 				System.out.println("A new database has been created");
+				//TODO 
 			} catch (SQLException e) {
 				System.out.println(e.getMessage());
 			}
