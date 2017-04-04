@@ -6,7 +6,7 @@ import java.sql.*;
 public class Client {
 	private boolean isAuthenticated;
 	private String defaultSQLitePath = "db/localdb.db";
-	private Connection dbConn;
+	private SQLiteInterface sqlite;
 	
 	public Client() {
 		this.isAuthenticated = false;
@@ -31,11 +31,12 @@ public class Client {
 			dbPath = dbPath.substring(1);
 		}
 		System.out.println(dbPath);
+		Connection dbConn = null;
 		if (!f.exists()) {
 			//Create SQLite database
 			try {
-				this.dbConn = DriverManager.getConnection(dbPath);
-				DatabaseMetaData meta = this.dbConn.getMetaData();
+				dbConn = DriverManager.getConnection(dbPath);
+				DatabaseMetaData meta = dbConn.getMetaData();
 				System.out.println("The driver name is " + meta.getDriverName());
 				System.out.println("A new database has been created");
 				//TODO 
@@ -46,11 +47,12 @@ public class Client {
 		} else {
 			//Just set it to the current SQLite database
 			try {
-				this.dbConn = DriverManager.getConnection(dbPath);
+				dbConn = DriverManager.getConnection(dbPath);
 			} catch (SQLException e) {
 				System.out.println(e.getMessage());
 			}
 		}
+		this.sqlite = new SQLiteInterface(dbConn);
 	}
 	
 	public boolean checkAuth() {

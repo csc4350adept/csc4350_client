@@ -1,7 +1,9 @@
+import java.sql.Connection;
 
 public class SQLiteInterface {
+	Connection c;
 
-	public SQLiteInterface() {
-		
+	public SQLiteInterface(Connection c) {
+		this.c = c;
 	}
 }
