@@ -5,8 +5,10 @@ public class Main {
 		Client c = new Client();
 		
 		try {
-			c.authenticate(Authenticate.proto.IMAP, "ebull", "foobar");
-		} catch (FeedbackException e) {
+			//c.authenticate(Authenticate.proto.IMAP, "ebull", "foobar");
+			c.authenticate("ebull5", "foobar5");
+			System.out.println("Authenticated? ");
+		} catch (ClientRequestException e) {
 			System.out.println(e.getMessage());
 		}
 	}

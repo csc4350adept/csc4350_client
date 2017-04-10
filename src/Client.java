@@ -4,66 +4,42 @@ import java.net.URLDecoder;
 import java.sql.*;
 
 public class Client {
-	private boolean isAuthenticated;
-	private String defaultSQLitePath = "db/localdb.db";
-	private SQLiteInterface sqlite;
+	private Authenticate authenticate;
+	private SQLiteInterface db;
 	
 	public Client() {
-		this.isAuthenticated = false;
-		
-		//Check to see if the SQLite db exists
-		//If it does not exist, create it
-		String path = Client.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-		String decodedPath = "";
+		//Need some error catching here
+		authenticate = new Authenticate(this);
+		db = new SQLiteInterface(this);
+	}
+	
+	public SQLiteInterface getDB() {
+		return db;
+	}
+	
+	public boolean authenticate(String uname, String pword) throws ClientRequestException {
+		authenticate.setCreds(uname,  pword);
 		try {
-			decodedPath = URLDecoder.decode(path, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Shit");
-			e.printStackTrace();
-		}
-		File dir = new File(String.join("/", new String[]{decodedPath, defaultSQLitePath.split("/")[0]}));
-		dir.mkdir();
-		System.out.println(dir.exists());
-		File f = new File(decodedPath + defaultSQLitePath);
-		String dbPath = "jdbc:sqlite:" + decodedPath + defaultSQLitePath;
-		if(dbPath.startsWith("/")) {
-			dbPath = dbPath.substring(1);
-		}
-		System.out.println(dbPath);
-		Connection dbConn = null;
-		if (!f.exists()) {
-			//Create SQLite database
-			try {
-				dbConn = DriverManager.getConnection(dbPath);
-				DatabaseMetaData meta = dbConn.getMetaData();
-				System.out.println("The driver name is " + meta.getDriverName());
-				System.out.println("A new database has been created");
-				//TODO 
-			} catch (SQLException e) {
-				System.out.println(e.getMessage());
+			if (authenticate.chkCreds()) {
+				if (authenticate.chkCreds(Authenticate.proto.IMAP)) {
+					return true;
+				}
 			}
-		
-		} else {
-			//Just set it to the current SQLite database
-			try {
-				dbConn = DriverManager.getConnection(dbPath);
-			} catch (SQLException e) {
-				System.out.println(e.getMessage());
-			}
+		} catch (ClientRequestException e) {
+			throw e;
 		}
-		this.sqlite = new SQLiteInterface(dbConn);
+		return false;
 	}
 	
-	public boolean checkAuth() {
-		return this.isAuthenticated;
-	}
-	
-	public boolean authenticate(Authenticate.proto proto, String uname, String pword) throws FeedbackException {
+	public boolean authenticate(Authenticate.proto proto, String uname, String pword) throws ClientRequestException {
+		authenticate.setCreds(uname, pword);
+		return true;
+		/*
 		Authenticate a = new Authenticate(uname, pword);
 		this.isAuthenticated = a.chkCreds(proto);
-		if (!this.isAuthenticated) throw new FeedbackException(a.getResp());
+		if (!this.isAuthenticated) throw new ClientRequestException(a.getResp());
 		else return true;
+		*/
 	}
 	
 	
