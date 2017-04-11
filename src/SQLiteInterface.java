@@ -61,17 +61,6 @@ public class SQLiteInterface {
 		c = dbConn;
 	}
 	
-	public boolean mkCreds(String uname, String pword) {
-		String sql = String.format("insert into USERS values(\"%s\", \"%s\")", uname, pword);
-		try {
-			Statement msg = c.createStatement();
-			msg.executeQuery(sql);
-		} catch (SQLException e) {
-			if (!e.getMessage().equals("query does not return ResultSet")) return false;
-		}
-		System.out.println("Created credentials");
-		return true;
-	}
 	
 	public boolean chkUserExists(String uname) {
 		String sql = String.format("select UNAME from USERS where UNAME = \"%s\"", uname);
@@ -94,11 +83,130 @@ public class SQLiteInterface {
 				System.out.println("success!");
 				return true;
 			}
-		}
-		catch (SQLException e) {
+		} catch (SQLException e) {
 			if (e.getMessage().equals("ResultSet closed")) return false;
 		}
-		
 		return false;
+	}
+	
+	/*-----------------------------SETTERS-------------------------------------------------*/
+	
+	public boolean mkCreds(String uname, String pword) {
+		String server = client.getDefServer();
+		int imap = client.getDefIMAPPort();
+		int smtp = client.getDefSMTPPort();
+		String sql = String.format("insert into USERS values(\"%s\", \"%s\", \"%s\", %d, %d)", uname, pword, server, imap, smtp);
+		try {
+			Statement msg = c.createStatement();
+			msg.executeQuery(sql);
+		} catch (SQLException e) {
+			if (!e.getMessage().equals("query does not return ResultSet")) return false;
+		}
+		System.out.println("Created credentials");
+		return true;
+	}
+	
+	public boolean mkCreds(String uname, String pword, String server, int imap, int smtp) {
+		String sql = String.format("insert into USERS values(\"%s\", \"%s\", \"%s\", %d, %d)", uname, pword, server, imap, smtp);
+		try {
+			Statement msg = c.createStatement();
+			msg.executeQuery(sql);
+		} catch (SQLException e) {
+			if (!e.getMessage().equals("query does not return ResultSet")) return false;
+		}
+		System.out.println("Created credentials");
+		return true;
+	}
+	
+	public boolean setServer(String uname, String pword, String server) throws ClientRequestException {
+		if (this.chkUserExists(uname)) {
+			if (this.chkCreds(uname, pword)) {
+				String sql = String.format("update USERS set SERVER=\"%s\" where UNAME=\"%s\"", server, uname);
+				try {
+					Statement msg = c.createStatement();
+					msg.executeQuery(sql);
+					return true;
+				} catch (SQLException e) {
+					if (!e.getMessage().equals("query does not return ResultSet"))
+					throw new ClientRequestException("SQL Exception: " + e.getMessage());
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean setIMAP(String uname, String pword, int imap) throws ClientRequestException {
+		if (this.chkUserExists(uname)) {
+			if (this.chkCreds(uname, pword)) {
+				String sql = String.format("update USERS set IMAP=\"%d\" where UNAME=\"%s\"", imap, uname);
+				try {
+					Statement msg = c.createStatement();
+					msg.executeQuery(sql);
+					return true;
+				} catch (SQLException e) {
+					if (!e.getMessage().equals("query does not return ResultSet"))
+					throw new ClientRequestException("SQL Exception: " + e.getMessage());
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean setSMTP(String uname, String pword, int smtp) throws ClientRequestException {
+		if (this.chkUserExists(uname)) {
+			if (this.chkCreds(uname, pword)) {
+				String sql = String.format("update USERS set SMTP=\"%d\" where UNAME=\"%s\"", smtp, uname);
+				try {
+					Statement msg = c.createStatement();
+					msg.executeQuery(sql);
+					return true;
+				} catch (SQLException e) {
+					if (!e.getMessage().equals("query does not return ResultSet"))
+					throw new ClientRequestException("SQL Exception: " + e.getMessage());
+				}
+			}
+		}
+		return false;
+	}
+	
+/*-----------------------------GETTERS-------------------------------------------------*/
+	
+	public String getServer(String uname) {
+		String server = client.getDefServer();
+		String sql = String.format("select SERVER from USERS where UNAME=\"%s\"", uname);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.getString("SERVER") != null) server = resp.getString("SERVER");
+		} catch (SQLException e) {
+			//Nothing needs to be done, will just go with the default.
+		}
+		return server;
+	}
+	
+	public int getIMAPPort(String uname) {
+		int port = client.getDefIMAPPort();
+		String sql = String.format("select IMAP from USERS where UNAME=\"%s\"", uname);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.getString("IMAP") != null) port = resp.getInt("IMAP");
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return port;
+	}
+	
+	public int getSMTPPort(String uname) {
+		int port = client.getDefSMTPPort();
+		String sql = String.format("select SMTP from USERS where UNAME=\"%s\"", uname);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.getString("SMTP") != null) port = resp.getInt("SMTP");
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return port;
 	}
 }

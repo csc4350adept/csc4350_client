@@ -4,6 +4,10 @@ import java.net.URLDecoder;
 import java.sql.*;
 
 public class Client {
+	private String defaultServer = "localhost";
+	private int defaultIMAPPort = 143;
+	private int defaultSMTPPort = 993;
+	
 	private Authenticate authenticate;
 	private SQLiteInterface db;
 	
@@ -13,9 +17,52 @@ public class Client {
 		db = new SQLiteInterface(this);
 	}
 	
+	/*-----------------------------Getters-------------------------------------------------*/
+	
 	public SQLiteInterface getDB() {
 		return db;
 	}
+	
+	public String getDefServer() {
+		return defaultServer;
+	}
+	
+	public int getDefIMAPPort() {
+		return defaultIMAPPort;
+	}
+	
+	public int getDefSMTPPort() {
+		return defaultSMTPPort;
+	}
+	
+	public String getServer(String uname) {
+		return db.getServer(uname);
+	}
+	
+	public int getIMAP(String uname) {
+		return db.getIMAPPort(uname);
+	}
+	
+	public int getSMTP(String uname) {
+		return db.getSMTPPort(uname);
+	}
+	
+	/*-----------------------------User Functions-------------------------------------------------*/
+	
+	public boolean chkUserExists(String uname) {
+		return db.chkUserExists(uname);
+	}
+	
+	public boolean mkUser(String uname, String pword, String server, int imap, int smtp) throws ClientRequestException {
+		if (!db.chkUserExists(uname)) {
+			authenticate.setCreds(uname, pword);
+			if (authenticate.chkCreds(Authenticate.proto.IMAP, server, imap)) {
+				return db.mkCreds(uname, pword, server, imap, smtp);
+			}
+		}
+		return false;
+	}
+	
 	
 	public boolean authenticate(String uname, String pword) throws ClientRequestException {
 		authenticate.setCreds(uname,  pword);
@@ -30,17 +77,5 @@ public class Client {
 		}
 		return false;
 	}
-	
-	public boolean authenticate(Authenticate.proto proto, String uname, String pword) throws ClientRequestException {
-		authenticate.setCreds(uname, pword);
-		return true;
-		/*
-		Authenticate a = new Authenticate(uname, pword);
-		this.isAuthenticated = a.chkCreds(proto);
-		if (!this.isAuthenticated) throw new ClientRequestException(a.getResp());
-		else return true;
-		*/
-	}
-	
 	
 }

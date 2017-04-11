@@ -25,7 +25,7 @@ public class Authenticate {
 			System.out.println("getting local auth");
 			boolean localAuth = client.getDB().chkCreds(uname, pword);
 			if (!localAuth && client.getDB().chkUserExists(uname)) return false;
-			boolean remoteAuth = client.authenticate(Authenticate.proto.IMAP, uname, pword);
+			boolean remoteAuth = this.chkCreds(Authenticate.proto.IMAP);
 			if (!localAuth && remoteAuth) {
 				boolean acctCreation = client.getDB().mkCreds(uname, pword);
 				if (acctCreation) return true;
@@ -34,12 +34,25 @@ public class Authenticate {
 		}
 		throw new ClientRequestException("Credentials not set.");
 	}
-
+	
 	public boolean chkCreds(proto p) throws ClientRequestException {
+		if (uname == null || pword == null) throw new ClientRequestException("Credentials not set.");
+		String server = client.getServer(uname);
+		int port;
+		if (p == proto.IMAP) port = client.getIMAP(uname);
+		else port = client.getSMTP(uname);
+		try {
+			return this.chkCreds(p, server, port);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+
+	public boolean chkCreds(proto p, String server, int port) throws ClientRequestException {
 		if (uname == null || pword == null) throw new ClientRequestException("Credentials not set.");
 		if (p == proto.IMAP) {
 			System.out.println("IMAP!!!");
-			//IMAP authentication
+			AdeptConnection adept = new AdeptConnection(server, port);
 		} else if (p == proto.SMTP) {
 			//SMTP authentication
 			System.out.println("SMTP!!!!");
