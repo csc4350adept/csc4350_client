@@ -5,8 +5,8 @@ import java.sql.*;
 
 public class Client {
 	private String defaultServer = "localhost";
-	private int defaultIMAPPort = 143;
-	private int defaultSMTPPort = 993;
+	private int defaultIMAPPort = 993;
+	private int defaultSMTPPort = 465;
 	
 	private Authenticate authenticate;
 	private SQLiteInterface db;
@@ -21,6 +21,10 @@ public class Client {
 	
 	public SQLiteInterface getDB() {
 		return db;
+	}
+	
+	public Authenticate getAuth() {
+		return authenticate;
 	}
 	
 	public String getDefServer() {

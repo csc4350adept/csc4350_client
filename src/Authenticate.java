@@ -20,6 +20,10 @@ public class Authenticate {
 		this.pword = pword;
 	}
 	
+	public String[] getCreds() {
+		return new String[] {uname, pword};
+	}
+	
 	public boolean chkCreds() throws ClientRequestException {
 		if (uname != null && pword != null) {
 			System.out.println("getting local auth");
@@ -52,7 +56,8 @@ public class Authenticate {
 		if (uname == null || pword == null) throw new ClientRequestException("Credentials not set.");
 		if (p == proto.IMAP) {
 			System.out.println("IMAP!!!");
-			AdeptConnection adept = new AdeptConnection(server, port);
+			AdeptConnection adept = new AdeptConnection(client, server, port, p);
+			adept.connect();
 		} else if (p == proto.SMTP) {
 			//SMTP authentication
 			System.out.println("SMTP!!!!");

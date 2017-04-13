@@ -43,6 +43,7 @@ public class SQLiteInterface {
 			try {
 				dbConn = DriverManager.getConnection(dbPath);
 				DatabaseMetaData meta = dbConn.getMetaData();
+				this.init(dbConn);
 				System.out.println("The driver name is " + meta.getDriverName());
 				System.out.println("A new database has been created");
 				//TODO 
@@ -90,6 +91,16 @@ public class SQLiteInterface {
 	}
 	
 	/*-----------------------------SETTERS-------------------------------------------------*/
+	
+	private void init(Connection dbc) throws SQLException {
+		String sql = "create table USERS(UNAME varchar(20) null, PWORD varchar(20) null), SERVER varchar(20) null, IMAP int null, SMTP int null";
+		try {
+			Statement msg = dbc.createStatement();
+			msg.executeQuery(sql);
+		} catch (SQLException e) {
+			if (!e.getMessage().equals("query does not return ResultSet")) throw e;
+		}
+	}
 	
 	public boolean mkCreds(String uname, String pword) {
 		String server = client.getDefServer();
