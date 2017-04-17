@@ -8,6 +8,10 @@ public class Client {
 	private int defaultIMAPPort = 993;
 	private int defaultSMTPPort = 465;
 	
+	private String keysFilePath;
+	private char[] keysFilePwd;
+	private char[] keysPwd;
+	
 	private Authenticate authenticate;
 	private SQLiteInterface db;
 	
@@ -15,6 +19,11 @@ public class Client {
 		//Need some error catching here
 		authenticate = new Authenticate(this);
 		db = new SQLiteInterface(this);
+		
+		//Create keyStore
+		keysFilePath = "KeyStoreC.jks";
+		keysFilePwd = "foobar".toCharArray();
+		keysPwd = "foobar".toCharArray();
 	}
 	
 	/*-----------------------------Getters-------------------------------------------------*/
@@ -49,6 +58,18 @@ public class Client {
 	
 	public int getSMTP(String uname) {
 		return db.getSMTPPort(uname);
+	}
+	
+	public String getKeysFilePath() {
+		return keysFilePath;
+	}
+	
+	public char[] getKeysFilePwd() {
+		return keysFilePwd;
+	}
+	
+	public char[] getKeysPwd() {
+		return keysPwd;
 	}
 	
 	/*-----------------------------User Functions-------------------------------------------------*/
