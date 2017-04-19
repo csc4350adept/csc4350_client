@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -102,7 +103,7 @@ public class AdeptConnection {
 		String pword = this.client.getAuth().getCreds()[1];
 		try{
 			if (p == Authenticate.proto.IMAP) {
-				String authString = String.format("login %s %s", uname, pword);
+				String authString = String.format("LOGIN %s %s", uname, pword);
 				String resp = sendMsg(authString.getBytes());
 			} else if (p == Authenticate.proto.SMTP) {
 				//stuff
@@ -118,11 +119,18 @@ public class AdeptConnection {
 		try {
 			if (output == null) System.out.println("output is null!");
 			output.write(msg);
-			//System.out.println(input.read());
+			char inChar;
+			String resp = "";
+			while((inChar = (char) input.read()) != -1) {
+				System.out.print(inChar);
+				if (inChar == 0) break;
+				resp = resp + inChar;
+			}
+			System.out.println(resp);
+			return resp;
 		} catch (IOException e) {
 			throw new ClientRequestException("IOException in sendMsg().");
 		}
-		return "";
 	}
 
 }

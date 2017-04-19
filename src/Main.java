@@ -6,8 +6,7 @@ public class Main {
 		
 		try {
 			//c.authenticate(Authenticate.proto.IMAP, "ebull", "foobar");
-			c.authenticate("ebull5", "foobar5");
-			System.out.println("Authenticated? ");
+			c.authenticate("ebull@adept.com", "foobar");
 		} catch (ClientRequestException e) {
 			System.out.println(e.getMessage());
 		}
