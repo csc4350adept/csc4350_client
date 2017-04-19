@@ -4,12 +4,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class AdeptConnection {
 	private Client client;
@@ -38,10 +42,33 @@ public class AdeptConnection {
 			}
 					
 			//Get trustmanager -- trustmanager should only trust provided key from 
+			//Create TrustManager
+			//Server doesn't verify identity of clients at initial connection
+			//Only clients verify the identity of the server
+			TrustManager trustManager = new X509TrustManager() {
+
+				@Override
+				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					//Be naive
+				}
+
+				@Override
+				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					//Be naive
+					
+				}
+
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					//Be naive
+					return null;
+				}
+			};	
+			
 			
 			SSLContext context = SSLContext.getInstance("TLS");
 			//Needs keystore and trustmanager
-			context.init(keyManagers, null, null);
+			context.init(keyManagers, new TrustManager[] {trustManager}, null);
 			SSLSocketFactory ssf = context.getSocketFactory();
 			
 			s = (SSLSocket) ssf.createSocket(host, port);
