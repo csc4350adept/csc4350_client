@@ -9,6 +9,14 @@ import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 
+
+/*
+ * Database
+ * 
+ * USERS
+ * UNAME|PWORD|SERVER|IMAP|SMTP|KEY
+ */
+
 public class SQLiteInterface {
 	Client client;
 	Connection c;
@@ -106,23 +114,39 @@ public class SQLiteInterface {
 		String server = client.getDefServer();
 		int imap = client.getDefIMAPPort();
 		int smtp = client.getDefSMTPPort();
-		String sql = String.format("insert into USERS values(\"%s\", \"%s\", \"%s\", %d, %d)", uname, pword, server, imap, smtp);
-		try {
-			Statement msg = c.createStatement();
-			msg.executeQuery(sql);
-		} catch (SQLException e) {
-			if (!e.getMessage().equals("query does not return ResultSet")) return false;
-		}
-		System.out.println("Created credentials");
-		return true;
+		String key = client.getDefaultUserKey();
+		return this.mkCreds(uname, pword, server, imap, smtp, key);
 	}
 	
-	public boolean mkCreds(String uname, String pword, String server, int imap, int smtp) {
-		String sql = String.format("insert into USERS values(\"%s\", \"%s\", \"%s\", %d, %d)", uname, pword, server, imap, smtp);
+	public boolean mkCreds(String uname, String pword, String server, int imap, int smtp, String key) {
+		System.out.println("Creating credentials");
+		String sql = String.format("insert into USERS values(\"%s\", \"%s\", \"%s\", %d, %d, \"%s\")", uname, pword, server, imap, smtp, key);
+		Statement msg;
 		try {
-			Statement msg = c.createStatement();
+			msg = c.createStatement();
 			msg.executeQuery(sql);
 		} catch (SQLException e) {
+			if (e.getMessage().startsWith("[SQLITE_ERROR] SQL error or missing database (no such table: USERS)")) {
+				String createTable = "create table USERS(UNAME varchar(20) primary key null, PWORD varchar(20) null, SERVER varchar(15) null, IMAP INTEGER null, SMTP INTEGER null, KEY varchar(512) null)";
+				try {
+					msg = c.createStatement();
+					msg.executeQuery(createTable);
+				} catch (SQLException cte) {
+					if (cte.getMessage().equals("query does not return ResultSet")) {
+						try {
+							msg = c.createStatement();
+							msg.executeQuery(sql);
+						} catch (SQLException cte2) {
+							if (cte2.getMessage().equals("query does not return ResultSet")) {
+								System.out.println("User created");
+								return true;
+							}
+						}
+						
+					}
+					return false;
+				}	
+			}
 			if (!e.getMessage().equals("query does not return ResultSet")) return false;
 		}
 		System.out.println("Created credentials");
@@ -145,6 +169,8 @@ public class SQLiteInterface {
 		}
 		return false;
 	}
+	
+	
 	
 	public boolean setIMAP(String uname, String pword, int imap) throws ClientRequestException {
 		if (this.chkUserExists(uname)) {

@@ -7,6 +7,7 @@ public class Client {
 	private String defaultServer = "localhost";
 	private int defaultIMAPPort = 993;
 	private int defaultSMTPPort = 465;
+	private String defaultUserKey = "ABC";
 	
 	private String keysFilePath;
 	private char[] keysFilePwd;
@@ -48,6 +49,10 @@ public class Client {
 		return defaultSMTPPort;
 	}
 	
+	public String getDefaultUserKey() {
+		return defaultUserKey;
+	}
+	
 	public String getServer(String uname) {
 		return db.getServer(uname);
 	}
@@ -72,6 +77,7 @@ public class Client {
 		return keysPwd;
 	}
 	
+	
 	/*-----------------------------User Functions-------------------------------------------------*/
 	
 	public boolean chkUserExists(String uname) {
@@ -82,7 +88,7 @@ public class Client {
 		if (!db.chkUserExists(uname)) {
 			authenticate.setCreds(uname, pword);
 			if (authenticate.chkCreds(Authenticate.proto.IMAP, server, imap)) {
-				return db.mkCreds(uname, pword, server, imap, smtp);
+				return db.mkCreds(uname, pword, server, imap, smtp, defaultUserKey);
 			}
 		}
 		return false;
@@ -93,14 +99,16 @@ public class Client {
 		authenticate.setCreds(uname,  pword);
 		try {
 			if (authenticate.chkCreds()) {
-				if (authenticate.chkCreds(Authenticate.proto.IMAP)) {
-					return true;
-				}
+				return true;
 			}
 		} catch (ClientRequestException e) {
 			throw e;
 		}
 		return false;
+	}
+	
+	public String getUname() {
+		return authenticate.getUname();
 	}
 	
 }

@@ -87,26 +87,43 @@ public class AdeptConnection {
 		}
 	}
 	
-	public boolean connect() throws ClientRequestException {
+	public String request(String msg) throws ClientRequestException {
+		String resp = null;
 		try {
 			System.out.println("Authenticating");
-			authenticate();
-			//Do stuff here
+			if(authenticate())
+				resp = sendMsg(msg);
+			if (resp != null)
+				s.close();
+				return resp;
 		} catch (ClientRequestException e) {
 			throw e;
+		} catch (IOException e) {
+			//If the server closes the socket before we do, we still want the response
+			return resp;
 		}
-		return true;
 	}
 	
-	private void authenticate() throws ClientRequestException {
+	public boolean authenticate() throws ClientRequestException {
 		String uname = this.client.getAuth().getCreds()[0];
 		String pword = this.client.getAuth().getCreds()[1];
 		try{
 			if (p == Authenticate.proto.IMAP) {
 				String authString = String.format("LOGIN %s %s", uname, pword);
 				String resp = sendMsg(authString.getBytes());
+				switch (resp) {
+				case "OK - User Authenticated":
+					return true;
+				case "NO - Login failure: Invalid username or password":
+					throw new ClientRequestException("Invalid username or password");
+				case "BAD - Invalid or unknown command":
+					throw new ClientRequestException("Invalid or unknown command");
+				default:
+					return false;
+				}
 			} else if (p == Authenticate.proto.SMTP) {
-				//stuff
+				/* No SMTP authentication, we only use IMAP on both ports */
+				throw new ClientRequestException("Authentication error: SMTP authentication not supported.");
 			} else {
 				throw new ClientRequestException("Authentication error: Invalid authentication type.");
 			}
@@ -115,18 +132,22 @@ public class AdeptConnection {
 		}
 	}
 	
+	private String sendMsg(String msg) throws ClientRequestException {
+		return sendMsg(msg.getBytes());
+	}
+	
 	private String sendMsg(byte[] msg) throws ClientRequestException {
 		try {
 			if (output == null) System.out.println("output is null!");
 			output.write(msg);
+			System.out.println(String.format("Sent: %s", new String(msg)));
 			char inChar;
 			String resp = "";
 			while((inChar = (char) input.read()) != -1) {
-				System.out.print(inChar);
 				if (inChar == 0) break;
 				resp = resp + inChar;
 			}
-			System.out.println(resp);
+			System.out.println(String.format("Received: %s", resp));
 			return resp;
 		} catch (IOException e) {
 			throw new ClientRequestException("IOException in sendMsg().");

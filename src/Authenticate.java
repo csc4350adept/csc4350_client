@@ -4,6 +4,7 @@ public class Authenticate {
 	private String uname;
 	private String pword;
 	private String resp;
+	public boolean isAuthenticated = false;
 	
 	public Authenticate(Client client) {
 		this.client = client;
@@ -18,6 +19,11 @@ public class Authenticate {
 	public void setCreds(String uname, String pword) {
 		this.uname = uname;
 		this.pword = pword;
+		this.isAuthenticated = false;
+	}
+	
+	public String getUname() {
+		return uname;
 	}
 	
 	public String[] getCreds() {
@@ -26,14 +32,39 @@ public class Authenticate {
 	
 	public boolean chkCreds() throws ClientRequestException {
 		if (uname != null && pword != null) {
+			//If we already did this...
+			if (isAuthenticated) return true;
+			
+			//Get local authentication
 			System.out.println("getting local auth");
 			boolean localAuth = client.getDB().chkCreds(uname, pword);
-			if (!localAuth && client.getDB().chkUserExists(uname)) return false;
-			boolean remoteAuth = this.chkCreds(Authenticate.proto.IMAP);
-			if (!localAuth && remoteAuth) {
-				boolean acctCreation = client.getDB().mkCreds(uname, pword);
-				if (acctCreation) return true;
-			} else if (localAuth && remoteAuth) return true;
+			System.out.println(localAuth);
+			
+			
+			//If local authentication succeeds, set isAuthenticated and return true
+			if (localAuth) {
+				isAuthenticated = true;
+				return true;
+			}
+			
+			//If local authentication failed, check if the user exists
+			boolean localUserExists = client.getDB().chkUserExists(uname);
+			System.out.println("User exists: " + localUserExists);
+			//If the user does exist, return false.
+			if (!localAuth && localUserExists) return false;
+			//If the user does not exist, do a remote auth and create on upon success
+			if (!localAuth && !localUserExists) {
+				boolean remoteAuth = this.chkCreds(Authenticate.proto.IMAP);
+				if (remoteAuth) {
+					boolean acctCreation = client.getDB().mkCreds(uname, pword);
+					if (acctCreation) {
+						isAuthenticated = true;
+						return true;
+					}
+				}
+			}
+			
+			//Return false if nothing worked
 			return false;
 		}
 		throw new ClientRequestException("Credentials not set.");
@@ -57,7 +88,11 @@ public class Authenticate {
 		if (p == proto.IMAP) {
 			System.out.println("IMAP!!!");
 			AdeptConnection adept = new AdeptConnection(client, server, port, p);
-			adept.connect();
+			try {
+				return adept.authenticate();
+			} catch (ClientRequestException e) {
+				throw e;
+			}
 		} else if (p == proto.SMTP) {
 			//SMTP authentication
 			System.out.println("SMTP!!!!");
