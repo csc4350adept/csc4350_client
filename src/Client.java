@@ -111,4 +111,13 @@ public class Client {
 		return authenticate.getUname();
 	}
 	
+	public boolean update() throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) return false;
+		AdeptConnection c = new AdeptConnection(this, db.getServer(authenticate.getUname()), db.getIMAPPort(authenticate.getUname()), Authenticate.proto.IMAP);
+		try {
+			return Update.requestUpdate(this, c);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}	
 }

@@ -16,6 +16,10 @@ public class Authenticate {
 	    IMAP, SMTP 
 	}
 	
+	public boolean isAuthenticated() {
+		return isAuthenticated;
+	}
+	
 	public void setCreds(String uname, String pword) {
 		this.uname = uname;
 		this.pword = pword;
