@@ -94,12 +94,10 @@ public class Update {
 					}
 				}
 			}
-			
-			
+			return true;
 		} catch (ClientRequestException e) {
 			throw e;
 		}
-		return false;
 	}
 	
 	
