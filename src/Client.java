@@ -246,20 +246,12 @@ public class Client {
 		}
 	}
 
-	public void setEmailRead(String id) throws ClientRequestException {
+	public boolean setEmailRead(String id) throws ClientRequestException {
 		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
-		String resp;
 		try {
-			AdeptConnection c = new AdeptConnection(this, this.getServer(authenticate.getUname()), this.getIMAP(authenticate.getUname()), Authenticate.proto.IMAP);
-			String msg = String.format("APPEND %s \\READ", id);
-			resp = c.request(msg);
+			return EditEmail.setEmailRead(this, id);
 		} catch (ClientRequestException e) {
 			throw e;
-		}
-		if (!resp.startsWith("OK")) {
-			if (resp.split(" - ").length > 1)
-				throw new ClientRequestException(resp.split(" - ")[1]);
-			else throw new ClientRequestException("Bad response");
 		}
 	}
 }

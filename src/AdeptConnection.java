@@ -149,5 +149,13 @@ public class AdeptConnection {
 			throw new ClientRequestException("IOException in sendMsg().");
 		}
 	}
+	
+	public void close() {
+		try {
+			s.close();
+		} catch (IOException e) {
+			/* do nothing */
+		}
+	}
 
 }
