@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class CLI {
+	Scanner stdin = new Scanner(new BufferedInputStream(System.in));
 	String banner = "Welcome to ADEPT mail client\nType a command or ? for options";
 	String cliString = "adept> ";
 	String quitString = "exit";
@@ -25,9 +26,6 @@ public class CLI {
 	
 	public void init() {
 		print(banner);
-		
-		Scanner stdin = new Scanner(new BufferedInputStream(System.in));
-		ArrayList<String> input = new ArrayList<String>();
 		String line = "";
 		String resp;
 		System.out.print("\n" + cliString);
@@ -63,6 +61,8 @@ public class CLI {
 			case "update":
 				resp = update();
 				break;
+			case "view":
+				resp = view(input);
 			default:
 				return resp;
 		}
@@ -119,11 +119,15 @@ public class CLI {
 		if (commandParts.size() == 1) {
 			//Display settings
 			ArrayList<String> result = new ArrayList<String>();
-			result.add(String.format("Username: %s", client.getUname()));
-			result.add(String.format("Server: %s", client.getServer(client.getUname())));
-			result.add(String.format("SMTP: %s", client.getSMTP(client.getUname())));
-			result.add(String.format("IMAP: %s", client.getIMAP(client.getUname())));
-			result.add(String.format("Key (currently not implemented): %s", client.getUserKey(client.getUname())));
+			try {
+				result.add(String.format("Username: %s", client.getUname()));
+				result.add(String.format("Server: %s", client.getServer(client.getUname())));
+				result.add(String.format("SMTP: %s", client.getSMTP(client.getUname())));
+				result.add(String.format("IMAP: %s", client.getIMAP(client.getUname())));
+				result.add(String.format("Key (currently not implemented): %s", client.getUserKey(client.getUname())));
+			} catch (ClientRequestException e) {
+				resp = e.getMessage();
+			}
 			resp = String.join("\n", result);
 		} else if (commandParts.size() == 3) {
 			//Change a particular setting
@@ -168,28 +172,128 @@ public class CLI {
 					}
 					break;
 				default:
-					resp = "Invalid setting.";
+					resp = "Invalid setting";
 			}
-		return resp;
 		}
-		
-		
-		
-		if (commandParts.size() == 3) {
-			String username = commandParts.get(1);
-			String password = commandParts.get(2);
-			try {
-				if (client.authenticate(username, password)) {
-					resp = "Login successful";
-					loggedIn = true;
-				} else {
-					resp = "Login unsuccessful";
+		return resp;
+	}
+	
+	private String view(String command) {
+		String resp = "Exiting view";
+		ArrayList<String> commandParts = new ArrayList<String>(Arrays.asList(command.split("\\s")));
+		//Display all emails
+		//Use a displayEmails(ArrayList<String>) function which displays emails 10 at a time
+		//Advances by hitting "n" or stops by hitting "q"
+		ArrayList<String> ids = new ArrayList<String>();
+		try {
+			if (commandParts.size() == 1) {
+				ids = client.getAllEmailIds(client.getUname());
+				for (String id : ids) System.out.println(id);
+			}
+			if (commandParts.size() == 2) {
+				String option = commandParts.get(1).toLowerCase();
+				switch (option) {
+					//Display only read emails
+					case "read":
+						ids = client.getReadEmailIds(client.getUname());
+						break;
+					//Display only unread emails
+					case "unread":
+						ids = client.getUnreadEmailIds(client.getUname());
+						break;
+					default:
+						ids = client.getEmailsByMailbox(client.getUname(), commandParts.get(1));
 				}
-			} catch (ClientRequestException e) {
-				resp = "Login failed. " + e.getMessage();
 			}
+			if (commandParts.size() == 3) {
+				String option = commandParts.get(1).toLowerCase();
+				String mailbox = commandParts.get(2);
+				boolean read;
+				switch (option) {
+					//Display only read emails
+					case "read":
+						read = true;
+						ids = client.getEmailsByMailbox(client.getUname(), mailbox, read);
+						break;
+					//Display only unread emails
+					case "unread":
+						read = false;
+						ids = client.getEmailsByMailbox(client.getUname(), mailbox, read);
+						break;
+				}
+			}
+			displayIdsByPage(ids);
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
 		}
 		return resp;
+	}
+	
+	private void displayIdsByPage(ArrayList<String> ids) {
+		if (ids.size() < 1) return;
+		int pageSize = 10; //Number of results to display per page
+		int pages = (int) Math.ceil((double) ids.size() / pageSize);
+		int page = 0;
+		ArrayList<String> lines = new ArrayList<String>();
+		HashMap<Integer, String> idResolver = new HashMap<Integer, String>();
+		while (page <= pages) {
+			lines.add(String.format("Displaying %d of %d pages", page + 1, pages));
+			int cursor = page * pageSize;
+			while (cursor < ((page * pageSize) + pageSize) && cursor < ids.size()) {
+				String subject;
+				try {
+					subject = client.getEmailSubject(ids.get(cursor));
+				} catch (ClientRequestException e) {
+					subject = "Could not retrieve subject header for email " + ids.get(cursor);
+				}
+				String line = String.format("%s:    %s", cursor, subject);
+				idResolver.put(new Integer(cursor), ids.get(cursor));
+				lines.add(line);
+				cursor++;
+			}
+			lines.add("Enter an email id to view it, n to go to the next page, or q to stop browsing results");
+			print(String.join("\n", lines));
+			System.out.print("\n" + cliString + "-view> ");
+			System.out.flush();
+			String line;
+			String resp;
+			boolean quit = false;
+			while (stdin.hasNextLine()) {
+				line = stdin.nextLine().trim();
+				if (line.matches("[0-9]+")) {
+					displayEmail(idResolver.get(Integer.parseInt(line)));
+				}
+				if (line.equals("q")) quit = true;
+				if (line.equals("n") || line.equals("q")) break;
+				print(String.join("\n", lines));
+				System.out.print("\n" + cliString + "-view> ");
+				System.out.flush();
+			}
+			if (quit) break;
+			page++;
+		}
+	}
+	
+	private void displayEmail(String id) {
+		ArrayList<String> email = new ArrayList<String>();
+		try {
+			email.add("DATE: " + client.getEmailDate(id));
+			email.add("TO: " + client.getEmailTo(id));
+			email.add("FROM: " + client.getEmailFrom(id));
+			email.add("SUBJECT: " + client.getEmailSubject(id));
+			email.add("BODY:\n" + client.getEmailBody(id));
+			email.add("END OF EMAIL\n");
+			client.setEmailRead(id);
+		} catch (ClientRequestException e) {
+			print("Could not retrieve email");
+			return;
+		}
+		print(String.join("\n", email));
+		//Just pausing the interface so the user can read their email
+		if (stdin.hasNextLine()) {
+			String line = stdin.nextLine();
+			print("");
+		}
 	}
 	
 	private HashMap<String, String> generateCmdList() {
@@ -199,6 +303,7 @@ public class CLI {
 		result.put("logout", "logout Logs out of the current session");
 		result.put("settings", "settings [<setting> <value>] Views user settings or updates a specific setting with a new value");
 		result.put("update", "update Forces an update with the server");
+		result.put("view", "view [read | unread] [<mailbox>] views a list of all emails, or a list of only read emails, or a list of only unread emails and display an email from the resulting set");
 		
 		return result;
 	}

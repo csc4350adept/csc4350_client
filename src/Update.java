@@ -37,14 +37,15 @@ public class Update {
 			//Get list of local emails
 			ArrayList<String> localEmails = db.getEmailIds(uName);
 			
-			
-			
+			ArrayList<String> failures = new ArrayList<String>();
+			boolean failed = false;
 			for (String email_id : emailsMailboxes.keySet()) {
 				String mailbox = emailsMailboxes.get(email_id);
 				HashMap<String, String> emailData = new HashMap<String, String>();
 				emailData.put("email_id", email_id);
 				emailData.put("mailbox", mailbox);
 				String okString = "OK - fetch completed";
+				
 				//If we don't have this email locally, fetch it and store it
 				if (!localEmails.contains(email_id)) {
 					msg = String.format("FETCH %s BODY[HEADER]", email_id);
@@ -63,6 +64,7 @@ public class Update {
 						}
 						
 					}
+					
 					//Get the message body
 					msg = String.format("FETCH %s BODY[TEXT]", email_id);
 					resp = c.request(msg);
@@ -84,17 +86,31 @@ public class Update {
 							case "UNREAD":
 								emailData.put("read", "f");
 								break;
+							default:
+								emailData.put("read", "f");
 						}
 					}
 					
 					//Check to make sure we have all the headers, body, and read flag
 					//Then update the local db with the information
 					if (emailData.keySet().size() == 8) {
-						db.addEmail(emailData);
+						try {
+							db.addEmail(emailData);
+						} catch (ClientRequestException e) {
+							//Hacky but this is still happening for some reason...
+							if (!e.getMessage().startsWith("[SQLITE_CONSTRAINT_PRIMARYKEY]")) {
+								failed = true;
+								failures.add(email_id);
+							}
+						}
 					}
 				}
 			}
-			return true;
+			if (!failed) return true;
+			else {
+				String failString = String.format("Failed to update email ids: ", String.join(", ", failures));
+				throw new ClientRequestException(failString);
+			}
 		} catch (ClientRequestException e) {
 			throw e;
 		}

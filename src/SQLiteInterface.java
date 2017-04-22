@@ -212,6 +212,76 @@ public class SQLiteInterface {
 	
 /*-----------------------------GETTERS-------------------------------------------------*/
 	
+	public String getEmailSubject(String id) throws ClientRequestException {
+		String subject = null;
+		String sql = String.format("select email_subject from emails where email_id='%s'", id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("email_subject") != null) subject = resp.getString("email_subject");
+		} catch (SQLException e) {
+			throw new ClientRequestException("SQL Error " + e.getMessage());
+		}
+		if (subject != null) return subject;
+		else throw new ClientRequestException("No subject for id " + id);
+	}
+	
+	public String getEmailDate(String id) throws ClientRequestException {
+		String subject = null;
+		String sql = String.format("select email_date from emails where email_id='%s'", id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("email_date") != null) subject = resp.getString("email_date");
+		} catch (SQLException e) {
+			throw new ClientRequestException("SQL Error " + e.getMessage());
+		}
+		if (subject != null) return subject;
+		else throw new ClientRequestException("No date for id " + id);
+	}
+	
+	public String getEmailTo(String id) throws ClientRequestException {
+		String subject = null;
+		String sql = String.format("select email_to from emails where email_id='%s'", id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("email_to") != null) subject = resp.getString("email_to");
+		} catch (SQLException e) {
+			throw new ClientRequestException("SQL Error " + e.getMessage());
+		}
+		if (subject != null) return subject;
+		else throw new ClientRequestException("No to for id " + id);
+	}
+	
+	public String getEmailFrom(String id) throws ClientRequestException {
+		String subject = null;
+		String sql = String.format("select email_from from emails where email_id='%s'", id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("email_from") != null) subject = resp.getString("email_from");
+		} catch (SQLException e) {
+			throw new ClientRequestException("SQL Error " + e.getMessage());
+		}
+		if (subject != null) return subject;
+		else throw new ClientRequestException("No from for id " + id);
+	}
+	
+	public String getEmailBody(String id) throws ClientRequestException {
+		String subject = null;
+		String sql = String.format("select email_body from emails where email_id='%s'", id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("email_body") != null) subject = resp.getString("email_body");
+		} catch (SQLException e) {
+			throw new ClientRequestException("SQL Error " + e.getMessage());
+		}
+		if (subject != null) return subject;
+		else throw new ClientRequestException("No body for id " + id);
+	}
+	
 	
 	public String getServer(String uname) {
 		String server = client.getDefServer();
@@ -267,7 +337,66 @@ public class SQLiteInterface {
 	
 	public ArrayList<String> getEmailIds(String uname) {
 		ArrayList<String> emailIds = new ArrayList<String>();
-		String sql = String.format("select email_id from emails inner join users on emails.username=users.username where username='%s'", uname);
+		String sql = String.format("select email_id from emails inner join users on emails.email_username=users.username where username='%s' order by email_date", uname);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			String emailId;
+			while (resp.next() && (emailId = resp.getString("email_id")) != null)
+				emailIds.add(emailId);
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return emailIds;
+	}
+	
+	public ArrayList<String> getEmailsByMailbox(String uname, String mailbox) {
+		ArrayList<String> emailIds;
+		String sql = String.format("select email_id from emails inner join users on emails.email_username=users.username inner join mailboxes on emails.email_mailbox=mailboxes.mailbox_id where username='%s' and mailbox='%s' order by email_date", uname, mailbox);
+		return getEmailsByMailboxDefined(sql);
+	}
+	
+	public ArrayList<String> getEmailsByMailbox(String uname, String mailbox, boolean read) {
+		ArrayList<String> emailIds;
+		String readString;
+		if (read) readString = "t";
+		else readString = "f";
+		String sql = String.format("select email_id from emails inner join users on emails.email_username=users.username inner join mailboxes on emails.email_mailbox=mailboxes.mailbox_id where username='%s' and mailbox='%s' and email_read='%s' order by email_date", uname, mailbox, readString);
+		return getEmailsByMailboxDefined(sql);
+	}
+
+	private ArrayList<String> getEmailsByMailboxDefined(String sql) {
+		ArrayList<String> emailIds = new ArrayList<String>();
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			String emailId;
+			while (resp.next() && (emailId = resp.getString("email_id")) != null)
+				emailIds.add(emailId);
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return emailIds;
+	}
+	
+	public ArrayList<String> getReadEmailIds(String uname) {
+		ArrayList<String> emailIds = new ArrayList<String>();
+		String sql = String.format("select email_id from emails inner join users on emails.email_username=users.username where username='%s' and email_read='t' order by email_date", uname);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			String emailId;
+			while (resp.next() && (emailId = resp.getString("email_id")) != null)
+				emailIds.add(emailId);
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return emailIds;
+	}
+	
+	public ArrayList<String> getUnreadEmailIds(String uname) {
+		ArrayList<String> emailIds = new ArrayList<String>();
+		String sql = String.format("select email_id from emails inner join users on emails.email_username=users.username where username='%s' and email_read='f' order by email_date", uname);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
@@ -318,8 +447,9 @@ public class SQLiteInterface {
 	}
 
 
-	public boolean addEmail(HashMap<String, String> emailData) {
+	public boolean addEmail(HashMap<String, String> emailData) throws ClientRequestException {
 		boolean valid = false;
+		//These are okay, they will be prefixed with email_ a few lines down
 		ArrayList<String> validFields = new ArrayList<String>(Arrays.asList(new String[] {"email_id", "mailbox", "date", "to", "from", "subject", "body", "read"}));
 		//the old boolean backflip, sorry not sorry
 		if (emailData.keySet().size() == validFields.size()) {
@@ -328,31 +458,35 @@ public class SQLiteInterface {
 				if (!validFields.contains(key)) valid = false;
 			}
 		}
-		
-		if (valid) {
-			emailData.put("username", client.getUname());
-			ArrayList<String> fields = new ArrayList<String>();
-			ArrayList<String> values = new ArrayList<String>();
-			for (String key : emailData.keySet()) {
-				if (!key.equals("email_id"))
-					fields.add("email_" + key);
-				else
-					fields.add(key);
-				if (!key.equals("email_id") && !key.equals("mailbox"))
-					values.add("'" + emailData.get(key) + "'");
-				else
-					values.add(emailData.get(key));
+		try {
+			if (valid) {
+				emailData.put("username", client.getUname());
+				ArrayList<String> fields = new ArrayList<String>();
+				ArrayList<String> values = new ArrayList<String>();
+				for (String key : emailData.keySet()) {
+					if (!key.equals("email_id"))
+						fields.add("email_" + key);
+					else
+						fields.add(key);
+					if (!key.equals("email_id") && !key.equals("email_mailbox"))
+						values.add("'" + emailData.get(key) + "'");
+					else
+						values.add(emailData.get(key));
+				}
+				String fieldsString = String.join(", ", fields);
+				String valuesString = String.join(", ", values);
+				String sql = String.format("insert into emails (%s) values (%s)", fieldsString, valuesString);
+				try {
+					Statement msg = c.createStatement();
+					msg.executeQuery(sql);
+				} catch (SQLException e) {
+					if (e.getMessage().equals("query does not return ResultSet")) return true;
+					throw new ClientRequestException(e.getMessage());
+				}
 			}
-			String fieldsString = String.join(", ", fields);
-			String valuesString = String.join(", ", values);
-			String sql = String.format("insert into emails (%s) values (%s)", fieldsString, valuesString);
-			try {
-				Statement msg = c.createStatement();
-				msg.executeQuery(sql);
-			} catch (SQLException e) {
-				if (e.getMessage().equals("query does not return ResultSet")) return true;
-			}
+		} catch (ClientRequestException e) {
+			throw e;
 		}
-		return false;
-	}
+			return false;
+		}
 }

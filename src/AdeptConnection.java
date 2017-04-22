@@ -90,7 +90,6 @@ public class AdeptConnection {
 	public String request(String msg) throws ClientRequestException {
 		String resp = null;
 		try {
-			System.out.println("Authenticating");
 			if(authenticate())
 				resp = sendMsg(msg);
 			if (resp != null)
@@ -137,14 +136,14 @@ public class AdeptConnection {
 		try {
 			if (output == null) System.out.println("output is null!");
 			output.write(msg);
-			System.out.println(String.format("Sent: %s", new String(msg)));
+			//System.out.println(String.format("Sent: %s\n", new String(msg)));
 			char inChar;
 			String resp = "";
 			while((inChar = (char) input.read()) != -1) {
 				if (inChar == 0) break;
 				resp = resp + inChar;
 			}
-			System.out.println(String.format("Received: %s", resp));
+			//System.out.println(String.format("Received: %s\n", resp));
 			return resp;
 		} catch (IOException e) {
 			throw new ClientRequestException("IOException in sendMsg().");

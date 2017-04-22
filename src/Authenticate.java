@@ -24,7 +24,6 @@ public class Authenticate {
 		this.uname = uname;
 		this.pword = pword;
 		this.isAuthenticated = false;
-		System.out.println("SETTING CREDENTIALS");
 	}
 	
 	public void clearCreds() {
@@ -47,10 +46,7 @@ public class Authenticate {
 			if (isAuthenticated) return true;
 			
 			//Get local authentication
-			System.out.println("getting local auth");
 			boolean localAuth = client.getDB().chkCreds(uname, pword);
-			System.out.println(localAuth);
-			
 			
 			//If local authentication succeeds, set isAuthenticated and return true
 			if (localAuth) {
@@ -60,25 +56,19 @@ public class Authenticate {
 			
 			//If local authentication failed, check if the user exists
 			boolean localUserExists = client.getDB().chkUserExists(uname);
-			System.out.println("User exists: " + localUserExists);
 			//If the user does exist, return false.
 			if (!localAuth && localUserExists) return false;
 			//If the user does not exist, do a remote auth and create on upon success
 			if (!localAuth && !localUserExists) {
-				System.out.println("Need to create user");
 				boolean remoteAuth = this.chkCreds(Authenticate.proto.IMAP);
 				if (remoteAuth) {
-					System.out.println("remote auth succeeded");
 					boolean acctCreation = client.getDB().mkCreds(uname, pword);
-					System.out.println("acctCreation " + acctCreation);
 					if (acctCreation) {
 						isAuthenticated = true;
 						return true;
 					}
 				}
-				System.out.println("remote auth failed");
 			}
-			
 			//Return false if nothing worked
 			return false;
 		}
@@ -101,7 +91,6 @@ public class Authenticate {
 	public boolean chkCreds(proto p, String server, int port) throws ClientRequestException {
 		if (uname == null || pword == null) throw new ClientRequestException("Credentials not set.");
 		if (p == proto.IMAP) {
-			System.out.println("IMAP!!!");
 			AdeptConnection adept = new AdeptConnection(client, server, port, p);
 			try {
 				return adept.authenticate();
@@ -110,7 +99,6 @@ public class Authenticate {
 			}
 		} else if (p == proto.SMTP) {
 			//SMTP authentication
-			System.out.println("SMTP!!!!");
 		}
 		return false;
 	}
