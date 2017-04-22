@@ -2,13 +2,13 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 
 /*
@@ -33,7 +33,6 @@ public class SQLiteInterface {
 		try {
 			decodedPath = URLDecoder.decode(path, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			System.out.println("Shit");
 			e.printStackTrace();
 		}
 		File dir = new File(String.join("/", new String[]{decodedPath, defaultSQLitePath.split("/")[0]}));
@@ -48,7 +47,6 @@ public class SQLiteInterface {
 			//Create SQLite database
 			try {
 				dbConn = DriverManager.getConnection(dbPath);
-				DatabaseMetaData meta = dbConn.getMetaData();
 				this.init(dbConn);
 			} catch (SQLException e) {
 				System.out.println(e.getMessage());
@@ -71,7 +69,7 @@ public class SQLiteInterface {
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.getString("UNAME") != null) return true;
+			if (resp.getString("username") != null) return true;
 		} catch (SQLException e) {
 			return false;
 		}
@@ -84,7 +82,6 @@ public class SQLiteInterface {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
 			if (resp.getString("password") != null && pword.equals(resp.getString("password"))) { //This needs to be more secure, but for now let it be
-				System.out.println("success!");
 				return true;
 			}
 		} catch (SQLException e) {
@@ -97,12 +94,11 @@ public class SQLiteInterface {
 	
 	private void init(Connection dbc) throws SQLException {
 		ArrayList<String> createTables = new ArrayList<String>();
-		createTables.add("CREATE TABLE 'emails' (	'email_id'	INTEGER NOT NULL,	'username'	TEXT NOT NULL,	'mailbox'	INTEGER NOT NULL,	'to'	TEXT NOT NULL,	'from'	TEXT NOT NULL,	'subject'	TEXT NOT NULL,	'body'	TEXT NOT NULL,	'read'	TEXT NOT NULL,	PRIMARY KEY('email_id'),	FOREIGN KEY('username') REFERENCES 'user'('username'),	FOREIGN KEY('mailbox') REFERENCES 'mailboxes'('mailbox_id'))");
+		createTables.add("CREATE TABLE 'emails' (	'email_id'	INTEGER NOT NULL,	'email_username'	TEXT NOT NULL,	'email_mailbox'	INTEGER NOT NULL,	'email_date'	TEXT NOT NULL,	'email_to'	TEXT NOT NULL,	'email_from'	TEXT NOT NULL,	'email_subject'	TEXT NOT NULL,	'email_body'	TEXT NOT NULL,	'email_read'	TEXT NOT NULL,	PRIMARY KEY('email_id'),	FOREIGN KEY('email_username') REFERENCES 'user'('username'),	FOREIGN KEY('email_mailbox') REFERENCES 'mailboxes'('mailbox_id'))");
 		createTables.add("CREATE TABLE 'mailboxes' (	'mailbox_id'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,	'username'	TEXT NOT NULL,	'mailbox'	TEXT NOT NULL,	FOREIGN KEY('username') REFERENCES 'users'('username'));");
 		createTables.add("CREATE TABLE IF NOT EXISTS `users` (	`username`	TEXT NOT NULL,	`password`	TEXT NOT NULL,	`server`	TEXT NOT NULL DEFAULT '127.0.0.1',	`smtp`	INTEGER NOT NULL DEFAULT 465,	`imap`	INTEGER NOT NULL DEFAULT 993,	`key`	INTEGER NOT NULL DEFAULT 'foobar',	PRIMARY KEY(`username`))");
 		
 		for (String sql : createTables) {
-			System.out.println(sql);
 			try {
 				Statement msg = dbc.createStatement();
 				msg.executeQuery(sql);
@@ -188,6 +184,7 @@ public class SQLiteInterface {
 	}
 	
 	public boolean createMailbox(String mailbox, String uName) throws ClientRequestException {
+		if (mailboxExists(mailbox, uName)) return true;
 		String sql = String.format("insert into mailboxes (username, mailbox) values('%s', '%s')", uName, mailbox);
 		Statement msg;
 		try {
@@ -202,9 +199,10 @@ public class SQLiteInterface {
 	
 /*-----------------------------GETTERS-------------------------------------------------*/
 	
+	
 	public String getServer(String uname) {
 		String server = client.getDefServer();
-		String sql = String.format("select server from users where username=\"%s\"", uname);
+		String sql = String.format("select server from users where username='%s'", uname);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
@@ -217,7 +215,7 @@ public class SQLiteInterface {
 	
 	public int getIMAPPort(String uname) {
 		int port = client.getDefIMAPPort();
-		String sql = String.format("select imap from users where username=\"%s\"", uname);
+		String sql = String.format("select imap from users where username='%s'", uname);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
@@ -230,7 +228,7 @@ public class SQLiteInterface {
 	
 	public int getSMTPPort(String uname) {
 		int port = client.getDefSMTPPort();
-		String sql = String.format("select smtp from users where username=\"%s\"", uname);
+		String sql = String.format("select smtp from users where username='%s'", uname);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
@@ -264,12 +262,12 @@ public class SQLiteInterface {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
 			String emailId;
-			while (resp.next() && (emailId = resp.getString("email_id")) != null)
+			while (resp.next() && (emailId = resp.getString("mailbox_id")) != null)
 				mailboxes.add(emailId);
 		} catch (SQLException e) {
 			//Nothing
 		}
-		if (mailboxes.size() == 1) return true;
+		if (mailboxes.size() > 0) return true;
 		else return false;
 	}
 
@@ -284,12 +282,51 @@ public class SQLiteInterface {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
 			String emailId;
-			while (resp.next() && (emailId = resp.getString("email_id")) != null)
+			while (resp.next() && (emailId = resp.getString("mailbox_id")) != null)
 				mailboxes.add(emailId);
 		} catch (SQLException e) {
 			//Nothing
 		}
 		if (mailboxes.size() == 1) return mailboxes.get(0);
 		else return null;
+	}
+
+
+	public boolean addEmail(HashMap<String, String> emailData) {
+		boolean valid = false;
+		ArrayList<String> validFields = new ArrayList<String>(Arrays.asList(new String[] {"email_id", "mailbox", "date", "to", "from", "subject", "body", "read"}));
+		//the old boolean backflip, sorry not sorry
+		if (emailData.keySet().size() == validFields.size()) {
+			valid = true;
+			for (String key : emailData.keySet()) {
+				if (!validFields.contains(key)) valid = false;
+			}
+		}
+		
+		if (valid) {
+			emailData.put("username", client.getUname());
+			ArrayList<String> fields = new ArrayList<String>();
+			ArrayList<String> values = new ArrayList<String>();
+			for (String key : emailData.keySet()) {
+				if (!key.equals("email_id"))
+					fields.add("email_" + key);
+				else
+					fields.add(key);
+				if (!key.equals("email_id") && !key.equals("mailbox"))
+					values.add("'" + emailData.get(key) + "'");
+				else
+					values.add(emailData.get(key));
+			}
+			String fieldsString = String.join(", ", fields);
+			String valuesString = String.join(", ", values);
+			String sql = String.format("insert into emails (%s) values (%s)", fieldsString, valuesString);
+			try {
+				Statement msg = c.createStatement();
+				msg.executeQuery(sql);
+			} catch (SQLException e) {
+				if (e.getMessage().equals("query does not return ResultSet")) return true;
+			}
+		}
+		return false;
 	}
 }

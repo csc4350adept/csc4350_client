@@ -24,6 +24,7 @@ public class Authenticate {
 		this.uname = uname;
 		this.pword = pword;
 		this.isAuthenticated = false;
+		System.out.println("SETTING CREDENTIALS");
 	}
 	
 	public String getUname() {

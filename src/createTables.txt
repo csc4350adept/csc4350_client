@@ -1,14 +1,16 @@
-CREATE TABLE 'emails' (	'email_id'	INTEGER NOT NULL,
-	'username'	TEXT NOT NULL,
-	'mailbox'	INTEGER NOT NULL,
-	'to'	TEXT NOT NULL,
-	'from'	TEXT NOT NULL,
-	'subject'	TEXT NOT NULL,
-	'body'	TEXT NOT NULL,
-	'read'	TEXT NOT NULL,
+CREATE TABLE 'emails' (
+	'email_id'	INTEGER NOT NULL,
+	'email_username'	TEXT NOT NULL,
+	'email_mailbox'	INTEGER NOT NULL,
+	'email_date'	TEXT NOT NULL,
+	'email_to'	TEXT NOT NULL,
+	'email_from'	TEXT NOT NULL,
+	'email_subject'	TEXT NOT NULL,
+	'email_body'	TEXT NOT NULL,
+	'email_read'	TEXT NOT NULL,
 	PRIMARY KEY('email_id'),
-	FOREIGN KEY('username') REFERENCES 'user'('username'),
-	FOREIGN KEY('mailbox') REFERENCES 'mailboxes'('mailbox_id'));
+	FOREIGN KEY('email_username') REFERENCES 'user'('username'),
+	FOREIGN KEY('email_mailbox') REFERENCES 'mailboxes'('mailbox_id'));
 
 CREATE TABLE 'mailboxes' (	'mailbox_id'	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	'username'	TEXT NOT NULL,
