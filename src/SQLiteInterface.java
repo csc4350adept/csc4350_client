@@ -137,9 +137,8 @@ public class SQLiteInterface {
 				try {
 					Statement msg = c.createStatement();
 					msg.executeQuery(sql);
-					return true;
 				} catch (SQLException e) {
-					if (!e.getMessage().equals("query does not return ResultSet"))
+					if (e.getMessage().equals("query does not return ResultSet")) return true;
 					throw new ClientRequestException("SQL Exception: " + e.getMessage());
 				}
 			}
@@ -156,9 +155,8 @@ public class SQLiteInterface {
 				try {
 					Statement msg = c.createStatement();
 					msg.executeQuery(sql);
-					return true;
 				} catch (SQLException e) {
-					if (!e.getMessage().equals("query does not return ResultSet"))
+					if (e.getMessage().equals("query does not return ResultSet")) return true;
 					throw new ClientRequestException("SQL Exception: " + e.getMessage());
 				}
 			}
@@ -173,9 +171,24 @@ public class SQLiteInterface {
 				try {
 					Statement msg = c.createStatement();
 					msg.executeQuery(sql);
-					return true;
 				} catch (SQLException e) {
-					if (!e.getMessage().equals("query does not return ResultSet"))
+					if (e.getMessage().equals("query does not return ResultSet")) return true;
+					throw new ClientRequestException("SQL Exception: " + e.getMessage());
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean setKey(String uname, String pword, String key) throws ClientRequestException {
+		if (this.chkUserExists(uname)) {
+			if (this.chkCreds(uname, pword)) {
+				String sql = String.format("update users set key=\"%d\" where username=\"%s\"", key, uname);
+				try {
+					Statement msg = c.createStatement();
+					msg.executeQuery(sql);
+				} catch (SQLException e) {
+					if (e.getMessage().equals("query does not return ResultSet")) return true;
 					throw new ClientRequestException("SQL Exception: " + e.getMessage());
 				}
 			}
@@ -206,7 +219,7 @@ public class SQLiteInterface {
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.getString("server") != null) server = resp.getString("server");
+			if (resp.next() && resp.getString("server") != null) server = resp.getString("server");
 		} catch (SQLException e) {
 			//Nothing needs to be done, will just go with the default.
 		}
@@ -219,7 +232,7 @@ public class SQLiteInterface {
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.getString("imap") != null) port = resp.getInt("imap");
+			if (resp.next() && resp.getString("imap") != null) port = resp.getInt("imap");
 		} catch (SQLException e) {
 			//Nothing
 		}
@@ -232,11 +245,24 @@ public class SQLiteInterface {
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.getString("smtp") != null) port = resp.getInt("smtp");
+			if (resp.next() && resp.getString("smtp") != null) port = resp.getInt("smtp");
 		} catch (SQLException e) {
 			//Nothing
 		}
 		return port;
+	}
+	
+	public String getUserKey(String uname) {
+		String userKey = client.getDefaultUserKey();
+		String sql = String.format("select key from users where username='%s'", uname);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("key") != null) userKey = resp.getString("key");
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return userKey;
 	}
 	
 	public ArrayList<String> getEmailIds(String uname) {

@@ -65,6 +65,10 @@ public class Client {
 		return db.getSMTPPort(uname);
 	}
 	
+	public String getUserKey(String uname) {
+		return db.getUserKey(uname);
+	}
+	
 	public String getKeysFilePath() {
 		return keysFilePath;
 	}
@@ -79,6 +83,47 @@ public class Client {
 	
 	
 	/*-----------------------------User Functions-------------------------------------------------*/
+	
+	
+	public boolean setServer(String uname, String server) throws ClientRequestException {
+		String[] creds =authenticate.getCreds();
+		try {
+			return db.setServer(creds[0], creds[1], server);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public boolean setSMTP(String uname, String smtp) throws ClientRequestException {
+		String[] creds =authenticate.getCreds();
+		try {
+			return db.setSMTP(creds[0], creds[1], Integer.parseInt(smtp));
+		} catch (ClientRequestException e) {
+			throw e;
+		} catch (NumberFormatException e) {
+			throw new ClientRequestException("SMTP Port must be a number");
+		}
+	}
+	
+	public boolean setIMAP(String uname, String imap) throws ClientRequestException {
+		String[] creds =authenticate.getCreds();
+		try {
+			return db.setSMTP(creds[0], creds[1], Integer.parseInt(imap));
+		} catch (ClientRequestException e) {
+			throw e;
+		} catch (NumberFormatException e) {
+			throw new ClientRequestException("SMTP Port must be a number");
+		}
+	}
+	
+	public boolean setKey(String uname, String key) throws ClientRequestException {
+		String[] creds = authenticate.getCreds();
+		try {
+			return db.setKey(creds[0], creds[1], key);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
 	
 	public boolean chkUserExists(String uname) {
 		return db.chkUserExists(uname);
@@ -105,6 +150,10 @@ public class Client {
 			throw e;
 		}
 		return false;
+	}
+	
+	public void clearAuthentication() {
+		authenticate.clearCreds();
 	}
 	
 	public String getUname() {

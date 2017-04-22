@@ -27,6 +27,12 @@ public class Authenticate {
 		System.out.println("SETTING CREDENTIALS");
 	}
 	
+	public void clearCreds() {
+		uname = null;
+		pword = null;
+		isAuthenticated = false;
+	}
+	
 	public String getUname() {
 		return uname;
 	}
