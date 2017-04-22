@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -63,6 +64,8 @@ public class CLI {
 				break;
 			case "view":
 				resp = view(input);
+			case "send":
+				resp = send(input);
 			default:
 				return resp;
 		}
@@ -296,14 +299,56 @@ public class CLI {
 		}
 	}
 	
+	private String send(String input) {
+		String resp = "Invalid send command";
+		if (input.split("\\s").length > 1) return "Invalid send arguments";
+		HashMap<String, String> emailData = new HashMap<String, String>();
+		
+		emailData.put("from", client.getAuth().getUname());
+		emailData.put("date", new SimpleDateFormat("yyyy.mm.dd").format(new java.util.Date()));
+		
+		print("Enter recipient (if multiple recipients, separate by commas)");
+		System.out.print("\n" + cliString + "-send> ");
+		System.out.flush();
+		if (stdin.hasNextLine())
+			emailData.put("to", stdin.nextLine().trim());
+		
+		print("Enter subject");
+		System.out.print("\n" + cliString + "-send> ");
+		System.out.flush();
+		if (stdin.hasNextLine())
+			emailData.put("subject", stdin.nextLine().trim());
+		
+		print("Enter body, terminated with a \".\" on a single line");
+		System.out.print("\n" + cliString + "-send> ");
+		System.out.flush();
+		ArrayList<String> bodyInput = new ArrayList<String>();
+		while (stdin.hasNextLine()) {
+			String line = stdin.nextLine().trim();
+			if (line.equals(".")) break;
+			bodyInput.add(line);
+			System.out.print("\n" + cliString + "-send> ");
+			System.out.flush();
+		}
+		emailData.put("body", String.join("\n", bodyInput));
+		
+		try {
+			EditEmail.sendEmail(client, emailData.get("date"), emailData.get("to"), emailData.get("from"), emailData.get("subject"), emailData.get("body"));
+		} catch (ClientRequestException e) {
+			resp = "Server command failed " + e.getMessage();
+		}
+		return resp;
+	}
+	
 	private HashMap<String, String> generateCmdList() {
 		HashMap<String, String> result = new HashMap<String, String>();
-		result.put("?", "? Gets a list of valid commands and arguments");
-		result.put("login", "login <username> <password> Logs in with a username and password. Valid authentication is required for all other commands");
-		result.put("logout", "logout Logs out of the current session");
-		result.put("settings", "settings [<setting> <value>] Views user settings or updates a specific setting with a new value");
-		result.put("update", "update Forces an update with the server");
-		result.put("view", "view [read | unread] [<mailbox>] views a list of all emails, or a list of only read emails, or a list of only unread emails and display an email from the resulting set");
+		result.put("?", 		"? 									Gets a list of valid commands and arguments");
+		result.put("login", 	"login <username> <password> 		Logs in with a username and password. Valid authentication is required for all other commands");
+		result.put("logout", 	"logout 							Logs out of the current session");
+		result.put("settings", 	"settings [<setting> <value>] 		Views user settings or updates a specific setting with a new value");
+		result.put("update", 	"update 							Forces an update with the server");
+		result.put("view", 		"view [read | unread] [<mailbox>] 	views a list of all emails, or a list of only read emails, or a list of only unread emails and display an email from the resulting set");
+		result.put("send", 		"send								Enters a dialogue for sending an email");
 		
 		return result;
 	}

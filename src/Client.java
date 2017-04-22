@@ -3,6 +3,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Client {
 	private String defaultServer = "localhost";
@@ -250,6 +251,15 @@ public class Client {
 		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
 		try {
 			return EditEmail.setEmailRead(this, id);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public boolean sendEmail(String date, String to, String from, String subject, String body) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return EditEmail.sendEmail(this, date, to, from, subject, body);
 		} catch (ClientRequestException e) {
 			throw e;
 		}
