@@ -94,14 +94,11 @@ public class AdeptConnection {
 			if(authenticate())
 				resp = sendMsg(msg);
 			if (resp != null)
-				s.close();
 				return resp;
 		} catch (ClientRequestException e) {
 			throw e;
-		} catch (IOException e) {
-			//If the server closes the socket before we do, we still want the response
-			return resp;
 		}
+		return null;
 	}
 	
 	public boolean authenticate() throws ClientRequestException {

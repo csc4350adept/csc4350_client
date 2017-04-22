@@ -42,11 +42,12 @@ public class Update {
 				String mailbox = emailsMailboxes.get(email_id);
 				//If we don't have this email locally, fetch it and store it
 				if (!localEmails.contains(email_id)) {
-					msg = String.format("FETCH %s HEADERS", email_id);
+					msg = String.format("FETCH %s HEADER", email_id);
 					resp = c.request(msg);
 					if (resp.startsWith("OK - List Completed") && resp.split("\n").length > 1) {
 						//Parse out each line
 						ArrayList<String> headers = new ArrayList<String>(Arrays.asList(Arrays.copyOfRange(resp.split("\n"), 1, resp.split("\n").length)));
+						System.out.println("\n\n" + String.join("\n", headers) + "\n\n");
 					}
 				}
 			}

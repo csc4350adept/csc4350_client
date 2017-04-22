@@ -58,14 +58,18 @@ public class Authenticate {
 			if (!localAuth && localUserExists) return false;
 			//If the user does not exist, do a remote auth and create on upon success
 			if (!localAuth && !localUserExists) {
+				System.out.println("Need to create user");
 				boolean remoteAuth = this.chkCreds(Authenticate.proto.IMAP);
 				if (remoteAuth) {
+					System.out.println("remote auth succeeded");
 					boolean acctCreation = client.getDB().mkCreds(uname, pword);
+					System.out.println("acctCreation " + acctCreation);
 					if (acctCreation) {
 						isAuthenticated = true;
 						return true;
 					}
 				}
+				System.out.println("remote auth failed");
 			}
 			
 			//Return false if nothing worked

@@ -14,6 +14,9 @@ public class Main {
 				System.out.println("Authenticated failed");
 				return;
 			}
+			
+			System.out.println("---------requesting update-----------");
+			c.update();
 		} catch (ClientRequestException e) {
 			System.out.println(e.getMessage());
 		}

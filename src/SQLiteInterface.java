@@ -67,7 +67,7 @@ public class SQLiteInterface {
 	
 	
 	public boolean chkUserExists(String uname) {
-		String sql = String.format("select UNAME from USERS where UNAME = \"%s\"", uname);
+		String sql = String.format("select username from users where username = \"%s\"", uname);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
@@ -79,11 +79,11 @@ public class SQLiteInterface {
 	}
 
 	public boolean chkCreds(String uname, String pword) {
-		String sql = String.format("select PWORD from USERS where UNAME = \"%s\"", uname);
+		String sql = String.format("select password from users where username = \"%s\"", uname);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.getString("PWORD") != null && pword.equals(resp.getString("PWORD"))) { //This needs to be more secure, but for now let it be
+			if (resp.getString("password") != null && pword.equals(resp.getString("password"))) { //This needs to be more secure, but for now let it be
 				System.out.println("success!");
 				return true;
 			}
@@ -112,7 +112,7 @@ public class SQLiteInterface {
 		}
 	}
 	
-	public boolean mkCreds(String uname, String pword) {
+	public boolean mkCreds(String uname, String pword) throws ClientRequestException {
 		String server = client.getDefServer();
 		int imap = client.getDefIMAPPort();
 		int smtp = client.getDefSMTPPort();
@@ -120,16 +120,18 @@ public class SQLiteInterface {
 		return this.mkCreds(uname, pword, server, imap, smtp, key);
 	}
 	
-	public boolean mkCreds(String uname, String pword, String server, int imap, int smtp, String key) {
+	public boolean mkCreds(String uname, String pword, String server, int imap, int smtp, String key) throws ClientRequestException {
 		String sql = String.format("insert into users values(\"%s\", \"%s\", \"%s\", %d, %d, \"%s\")", uname, pword, server, smtp, imap, key);
 		Statement msg;
 		try {
 			msg = c.createStatement();
 			msg.executeQuery(sql);
 		} catch (SQLException e) {
-			if (!e.getMessage().equals("query does not return ResultSet")) return false;
+			if (e.getMessage().equals("query does not return ResultSet")) return true;
+			System.out.println(e.getMessage());
+			throw new ClientRequestException(e.getMessage());
 		}
-		return true;
+		return false;
 	}
 	
 	public boolean setServer(String uname, String pword, String server) throws ClientRequestException {
@@ -186,7 +188,7 @@ public class SQLiteInterface {
 	}
 	
 	public boolean createMailbox(String mailbox, String uName) throws ClientRequestException {
-		String sql = String.format("insert into mailboxes values(default, '%s', '%s')", uName, mailbox);
+		String sql = String.format("insert into mailboxes (username, mailbox) values('%s', '%s')", uName, mailbox);
 		Statement msg;
 		try {
 			msg = c.createStatement();
