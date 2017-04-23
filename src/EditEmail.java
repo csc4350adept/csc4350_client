@@ -75,7 +75,7 @@ public class EditEmail {
 		String msg;
 		AdeptConnection c = null;
 		try {
-			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getIMAP(client.getAuth().getUname()), Authenticate.proto.IMAP);
 			
 			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
@@ -96,7 +96,7 @@ public class EditEmail {
 		String msg;
 		AdeptConnection c = null;
 		try {
-			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getIMAP(client.getAuth().getUname()), Authenticate.proto.IMAP);
 			
 			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
@@ -117,7 +117,7 @@ public class EditEmail {
 		String msg;
 		AdeptConnection c = null;
 		try {
-			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getIMAP(client.getAuth().getUname()), Authenticate.proto.IMAP);
 			
 			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
@@ -138,7 +138,7 @@ public class EditEmail {
 		String msg;
 		AdeptConnection c = null;
 		try {
-			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getIMAP(client.getAuth().getUname()), Authenticate.proto.IMAP);
 			
 			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
@@ -159,7 +159,7 @@ public class EditEmail {
 		String msg;
 		AdeptConnection c = null;
 		try {
-			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getIMAP(client.getAuth().getUname()), Authenticate.proto.IMAP);
 			
 			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
