@@ -202,7 +202,6 @@ public class CLI {
 		try {
 			if (commandParts.size() == 1) {
 				ids = client.getAllEmailIds(client.getUname());
-				for (String id : ids) System.out.println(id);
 			}
 			if (commandParts.size() == 2) {
 				String option = commandParts.get(1).toLowerCase();

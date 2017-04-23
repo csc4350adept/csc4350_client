@@ -81,8 +81,18 @@ public class SQLiteInterface {
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.getString("password") != null && pword.equals(resp.getString("password"))) { //This needs to be more secure, but for now let it be
-				return true;
+			
+			if (resp.getString("password") != null) { //This needs to be more secure, but for now let it be
+				try {
+					//pword
+					String pwordhash = Crypt.getPwordHash(pword);
+					String storedhash = resp.getString("password");
+					if (pwordhash.equals(storedhash)) return true;
+				} catch (CryptException e) {
+					/* this should never happen */
+					System.out.println("CryptException, this shouldn't happen");
+					return false;
+				}
 			}
 		} catch (SQLException e) {
 			if (e.getMessage().equals("ResultSet closed")) return false;
@@ -117,7 +127,13 @@ public class SQLiteInterface {
 	}
 	
 	public boolean mkCreds(String uname, String pword, String server, int imap, int smtp, String key) throws ClientRequestException {
-		String sql = String.format("insert into users values(\"%s\", \"%s\", \"%s\", %d, %d, \"%s\")", uname, pword, server, smtp, imap, key);
+		String pwordhash;
+		try {
+			pwordhash = Crypt.getPwordHash(pword);
+		} catch (CryptException e) {
+			throw new ClientRequestException(e.getMessage());
+		}
+		String sql = String.format("insert into users values(\"%s\", \"%s\", \"%s\", %d, %d, \"%s\")", uname, pwordhash, server, smtp, imap, key);
 		Statement msg;
 		try {
 			msg = c.createStatement();
@@ -219,11 +235,13 @@ public class SQLiteInterface {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
 			if (resp.next() && resp.getString("email_subject") != null) subject = resp.getString("email_subject");
+			if (subject != null) return Crypt.decrypt(subject, client.getAuth().getCreds()[1]);
 		} catch (SQLException e) {
-			throw new ClientRequestException("SQL Error " + e.getMessage());
+			throw new ClientRequestException(e.getMessage());
+		} catch (CryptException e) {
+			throw new ClientRequestException(e.getMessage());
 		}
-		if (subject != null) return subject;
-		else throw new ClientRequestException("No subject for id " + id);
+		throw new ClientRequestException("Retrieval failed");
 	}
 	
 	public String getEmailDate(String id) throws ClientRequestException {
@@ -247,11 +265,13 @@ public class SQLiteInterface {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
 			if (resp.next() && resp.getString("email_to") != null) subject = resp.getString("email_to");
+			if (subject != null) return Crypt.decrypt(subject, client.getAuth().getCreds()[1]);
 		} catch (SQLException e) {
-			throw new ClientRequestException("SQL Error " + e.getMessage());
+			throw new ClientRequestException(e.getMessage());
+		} catch (CryptException e) {
+			throw new ClientRequestException(e.getMessage());
 		}
-		if (subject != null) return subject;
-		else throw new ClientRequestException("No to for id " + id);
+		throw new ClientRequestException("Retrieval failed");
 	}
 	
 	public String getEmailFrom(String id) throws ClientRequestException {
@@ -261,25 +281,29 @@ public class SQLiteInterface {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
 			if (resp.next() && resp.getString("email_from") != null) subject = resp.getString("email_from");
+			if (subject != null) return Crypt.decrypt(subject, client.getAuth().getCreds()[1]);
 		} catch (SQLException e) {
-			throw new ClientRequestException("SQL Error " + e.getMessage());
+			throw new ClientRequestException(e.getMessage());
+		} catch (CryptException e) {
+			throw new ClientRequestException(e.getMessage());
 		}
-		if (subject != null) return subject;
-		else throw new ClientRequestException("No from for id " + id);
+		throw new ClientRequestException("Retrieval failed");
 	}
 	
 	public String getEmailBody(String id) throws ClientRequestException {
-		String subject = null;
+		String body = null;
 		String sql = String.format("select email_body from emails where email_id='%s'", id);
 		try {
 			Statement msg = c.createStatement();
 			ResultSet resp = msg.executeQuery(sql);
-			if (resp.next() && resp.getString("email_body") != null) subject = resp.getString("email_body");
+			if (resp.next() && resp.getString("email_body") != null) body = resp.getString("email_body");
+			if (body != null) return Crypt.decrypt(body, client.getAuth().getCreds()[1]).replaceAll("\\n", "\n");
 		} catch (SQLException e) {
-			throw new ClientRequestException("SQL Error " + e.getMessage());
+			throw new ClientRequestException(e.getMessage());
+		} catch (CryptException e) {
+			throw new ClientRequestException(e.getMessage());
 		}
-		if (subject != null) return subject;
-		else throw new ClientRequestException("No body for id " + id);
+		throw new ClientRequestException("Retrieval failed");
 	}
 	
 	
@@ -460,6 +484,17 @@ public class SQLiteInterface {
 		}
 		try {
 			if (valid) {
+				//Encrypt sensitive fields "to", "from", "subject", "body"
+				String[] sensitiveFields = new String[] {"to", "from", "subject", "body"};
+				try {
+					for (String field : sensitiveFields) {
+						String value = emailData.get(field);
+						emailData.put(field, Crypt.encrypt(value, client.getAuth().getCreds()[1]));
+					}
+				} catch (CryptException e) {
+					throw new ClientRequestException(e.getMessage());
+				}
+
 				emailData.put("username", client.getUname());
 				ArrayList<String> fields = new ArrayList<String>();
 				ArrayList<String> values = new ArrayList<String>();

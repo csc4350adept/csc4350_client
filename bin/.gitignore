@@ -11,3 +11,5 @@
 /createTables.txt
 /CLI.class
 /EditEmail.class
+/Crypt.class
+/CryptException.class

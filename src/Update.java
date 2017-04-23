@@ -97,6 +97,9 @@ public class Update {
 						try {
 							db.addEmail(emailData);
 						} catch (ClientRequestException e) {
+							System.out.println("Update.java ClientRequestException on db.addEmail(emailData)");
+							System.out.println(e.getMessage());
+							e.printStackTrace();
 							//Hacky but this is still happening for some reason...
 							if (!e.getMessage().startsWith("[SQLITE_CONSTRAINT_PRIMARYKEY]")) {
 								failed = true;
