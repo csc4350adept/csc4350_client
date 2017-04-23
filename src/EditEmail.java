@@ -68,5 +68,110 @@ public class EditEmail {
 		}
 		return true;
 	}
+	
+	//CREATE mailbox_name
+	public static boolean createMailbox(Client client, String mailbox) throws ClientRequestException {
+		String resp;
+		String msg;
+		AdeptConnection c = null;
+		try {
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			
+			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
+			
+			msg = String.format("CREATE \"%s\"", mailbox.replace("\"", "'"));
+			resp = c.sendMsg(msg);
+			if (!resp.startsWith("OK")) throw new ClientRequestException(resp);
+			c.close();
+		} catch (ClientRequestException e) {
+			if (c != null) c.close();
+			throw e;
+		}
+		return true;
+	}
+	
+	//DELETE mailbox_name
+	public static boolean deleteMailbox(Client client, String mailbox) throws ClientRequestException {
+		String resp;
+		String msg;
+		AdeptConnection c = null;
+		try {
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			
+			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
+			
+			msg = String.format("DELETE \"%s\"", mailbox.replace("\"", "'"));
+			resp = c.sendMsg(msg);
+			if (!resp.startsWith("OK")) throw new ClientRequestException(resp);
+			c.close();
+		} catch (ClientRequestException e) {
+			if (c != null) c.close();
+			throw e;
+		}
+		return true;
+	}
+	
+	//RENAME mailbox_name new_mailbox_name
+	public static boolean renameMailbox(Client client, String mailbox, String newName) throws ClientRequestException {
+		String resp;
+		String msg;
+		AdeptConnection c = null;
+		try {
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			
+			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
+			
+			msg = String.format("CREATE \"%s\" \"%s\"", mailbox.replace("\"", "'"), newName.replace("\"", "'"));
+			resp = c.sendMsg(msg);
+			if (!resp.startsWith("OK")) throw new ClientRequestException(resp);
+			c.close();
+		} catch (ClientRequestException e) {
+			if (c != null) c.close();
+			throw e;
+		}
+		return true;
+	}
+	
+	//UID MOVE email_id mailbox_name
+	public static boolean moveEmail(Client client, String emailId, String mailbox) throws ClientRequestException {
+		String resp;
+		String msg;
+		AdeptConnection c = null;
+		try {
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			
+			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
+			
+			msg = String.format("UID MOVE %s %s", emailId, mailbox);
+			resp = c.sendMsg(msg);
+			if (!resp.startsWith("OK")) throw new ClientRequestException(resp);
+			c.close();
+		} catch (ClientRequestException e) {
+			if (c != null) c.close();
+			throw e;
+		}
+		return true;
+	}
+	
+	//UID EXPUNGE email_id
+	public static boolean deleteEmail(Client client, String emailId) throws ClientRequestException {
+		String resp;
+		String msg;
+		AdeptConnection c = null;
+		try {
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			
+			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
+			
+			msg = String.format("UID EXPUNGE %s", emailId);
+			resp = c.sendMsg(msg);
+			if (!resp.startsWith("OK")) throw new ClientRequestException(resp);
+			c.close();
+		} catch (ClientRequestException e) {
+			if (c != null) c.close();
+			throw e;
+		}
+		return true;
+	}
 
 }

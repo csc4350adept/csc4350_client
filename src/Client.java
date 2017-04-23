@@ -264,4 +264,49 @@ public class Client {
 			throw e;
 		}
 	}
+	
+	public boolean createMailbox(String mailbox) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return EditEmail.createMailbox(this, mailbox);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public boolean deleteMailbox(String mailbox) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return EditEmail.deleteMailbox(this, mailbox);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public boolean renameMailbox(String mailbox, String newName) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return EditEmail.renameMailbox(this, mailbox, newName);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public boolean moveEmail(String email, String mailbox) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return EditEmail.moveEmail(this, email, mailbox);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public boolean deleteEmail(String email) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return EditEmail.deleteMailbox(this, email);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
 }
