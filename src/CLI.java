@@ -77,6 +77,9 @@ public class CLI {
 			case "namefolder":
 				resp = nameFolder(input);
 				break;
+			case "mailboxes":
+				resp = listMailboxNames();
+				break;
 			default:
 				return resp;
 		}
@@ -120,6 +123,17 @@ public class CLI {
 		try {
 			if (client.update()) resp = "Update successful";
 			else resp = "Update unsuccessful"; //informative, I know...
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
+		}
+		return resp;
+	}
+	
+	private String listMailboxNames() {
+		String resp;
+		try {
+			ArrayList<String> mailboxes = client.getAllMailboxNames(client.getUname());
+			resp = String.join("\n", mailboxes);
 		} catch (ClientRequestException e) {
 			resp = e.getMessage();
 		}
@@ -254,12 +268,18 @@ public class CLI {
 			int cursor = page * pageSize;
 			while (cursor < ((page * pageSize) + pageSize) && cursor < ids.size()) {
 				String subject;
+				String mailbox;
+				try {
+					mailbox = client.getEmailMailbox(ids.get(cursor));
+				} catch (ClientRequestException e) {
+					mailbox = "Could not retrieve mailbox for email " + ids.get(cursor);
+				}
 				try {
 					subject = client.getEmailSubject(ids.get(cursor));
 				} catch (ClientRequestException e) {
 					subject = "Could not retrieve subject header for email " + ids.get(cursor);
 				}
-				String line = String.format("%s:    %s", cursor, subject);
+				String line = String.format("%s (%s):    %s", cursor, mailbox, subject);
 				idResolver.put(new Integer(cursor), ids.get(cursor));
 				lines.add(line);
 				cursor++;
@@ -418,7 +438,7 @@ public class CLI {
 		String resp = "Invalid nameFolder command";
 		try {
 			if (EditEmail.deleteEmail(client, emailId))
-				resp = "Mailbox deleted";
+				resp = "Email deleted";
 		} catch (ClientRequestException e) {
 			resp = e.getMessage();
 		}
@@ -427,16 +447,17 @@ public class CLI {
 	
 	private HashMap<String, String> generateCmdList() {
 		HashMap<String, String> result = new HashMap<String, String>();
-		result.put("?", 		"? 									Gets a list of valid commands and arguments");
-		result.put("login", 	"login <username> <password> 		Logs in with a username and password. Valid authentication is required for all other commands");
-		result.put("logout", 	"logout 							Logs out of the current session");
-		result.put("settings", 	"settings [<setting> <value>] 		Views user settings or updates a specific setting with a new value");
-		result.put("update", 	"update 							Forces an update with the server");
-		result.put("view", 		"view [read | unread] [<mailbox>] 	views a list of all emails, or a list of only read emails, or a list of only unread emails and display an email from the resulting set");
-		result.put("send", 		"send								Enters a dialogue for sending an email");
-		result.put("mkfolder", 	"mkfolder <mailbox>					Creates a mailbox with the specified name");
-		result.put("rmfolder", 	"rmfolder <mailbox>					Deleted a mailbox with the specified name");
-		result.put("namefolder","namefolder <mailbox> <mailbox>		renames a mailbox with the specified name to a new name");
+		result.put("?", 		"?                                  Gets a list of valid commands and arguments");
+		result.put("login", 	"login <username> <password>        Logs in with a username and password. Valid authentication is required for all other commands");
+		result.put("logout", 	"logout                             Logs out of the current session");
+		result.put("settings", 	"settings [<setting> <value>]       Views user settings or updates a specific setting with a new value");
+		result.put("update", 	"update                             Forces an update with the server");
+		result.put("view", 		"view [read | unread] [<mailbox>]   views a list of all emails, or a list of only read emails, or a list of only unread emails and display an email from the resulting set");
+		result.put("send", 		"send                               Enters a dialogue for sending an email");
+		result.put("mkfolder", 	"mkfolder <mailbox>                 Creates a mailbox with the specified name");
+		result.put("rmfolder", 	"rmfolder <mailbox>                 Deleted a mailbox with the specified name");
+		result.put("namefolder","namefolder <mailbox> <mailbox>     Renames a mailbox with the specified name to a new name");
+		result.put("mailboxes", "mailboxes                          Lists all mailbox names");
 		return result;
 	}
 	private void print(String s) {

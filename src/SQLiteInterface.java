@@ -306,6 +306,20 @@ public class SQLiteInterface {
 		throw new ClientRequestException("Retrieval failed");
 	}
 	
+	public String getEmailMailbox(String id) throws ClientRequestException {
+		String body = null;
+		String sql = String.format("select mailbox from emails inner join mailboxes on emails.email_mailbox=mailboxes.mailbox_id where email_id='%s'", id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			if (resp.next() && resp.getString("mailbox") != null) body = resp.getString("mailbox");
+			if (body != null) return body;
+		} catch (SQLException e) {
+			throw new ClientRequestException(e.getMessage());
+		}
+		throw new ClientRequestException("Retrieval failed");
+	}
+	
 	
 	public String getServer(String uname) {
 		String server = client.getDefServer();
@@ -450,7 +464,20 @@ public class SQLiteInterface {
 		else return false;
 	}
 
-
+	public ArrayList<String> getAllMailboxNames(String uName) throws ClientRequestException {
+		ArrayList<String> mailboxes = new ArrayList<String>();
+		String sql = String.format("select mailbox from mailboxes where username='%s'", uName);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			String mailbox;
+			while (resp.next() && (mailbox = resp.getString("mailbox")) != null)
+				mailboxes.add(mailbox);
+		} catch (SQLException e) {
+			//Nothing
+		}
+		return mailboxes;
+	}
 	
 
 	public String getMailboxID(String mailbox, String uName) {

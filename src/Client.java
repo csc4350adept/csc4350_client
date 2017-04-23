@@ -191,6 +191,11 @@ public class Client {
 		return db.getEmailIds(uname);
 	}
 	
+	public ArrayList<String> getAllMailboxNames(String uname) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		return db.getAllMailboxNames(uname);
+	}
+	
 	public ArrayList<String> getReadEmailIds(String uname) throws ClientRequestException {
 		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
 		return db.getReadEmailIds(uname);
@@ -242,6 +247,15 @@ public class Client {
 		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
 		try {
 			return db.getEmailBody(id);
+		} catch (ClientRequestException e) {
+			throw e;
+		}
+	}
+	
+	public String getEmailMailbox(String id) throws ClientRequestException {
+		if (!authenticate.isAuthenticated()) throw new ClientRequestException("Not authenticated");
+		try {
+			return db.getEmailMailbox(id);
 		} catch (ClientRequestException e) {
 			throw e;
 		}
