@@ -64,8 +64,19 @@ public class CLI {
 				break;
 			case "view":
 				resp = view(input);
+				break;
 			case "send":
 				resp = send(input);
+				break;
+			case "mkfolder":
+				resp = mkFolder(input);
+				break;
+			case "rmfolder":
+				resp = rmFolder(input);
+				break;
+			case "namefolder":
+				resp = nameFolder(input);
+				break;
 			default:
 				return resp;
 		}
@@ -259,7 +270,6 @@ public class CLI {
 			System.out.print("\n" + cliString + "-view> ");
 			System.out.flush();
 			String line;
-			String resp;
 			boolean quit = false;
 			while (stdin.hasNextLine()) {
 				line = stdin.nextLine().trim();
@@ -292,10 +302,17 @@ public class CLI {
 			return;
 		}
 		print(String.join("\n", email));
-		//Just pausing the interface so the user can read their email
+		//Edit Email Options
+		print("mvemail <mailbox> to move the email or rmemail to delete it or any other key to continue");
+		System.out.print("\n" + cliString + String.format("-email#%s> ", id));
+		System.out.flush();
 		if (stdin.hasNextLine()) {
 			String line = stdin.nextLine();
-			print("");
+			if (line.startsWith("mvemail")) {
+				print(mvEmail(line, id));
+			} else if (line.equals("rmemail")) {
+				print(rmEmail(id));
+			}
 		}
 	}
 	
@@ -337,6 +354,78 @@ public class CLI {
 		return resp;
 	}
 	
+	private String mkFolder(String input) {
+		String resp = "Invalid mkFolder command";
+		ArrayList<String> respParts = new ArrayList<String>(Arrays.asList(input.split("\\s")));
+		if (respParts.size() != 2) return "Invalid mkFolder arguments";
+		String mailbox = respParts.get(1);
+		
+		try {
+			if (EditEmail.createMailbox(client, mailbox))
+				resp = "Mailbox created";
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
+		}
+		return resp;
+	}
+	
+	private String rmFolder(String input) {
+		String resp = "Invalid rmFolder command";
+		ArrayList<String> respParts = new ArrayList<String>(Arrays.asList(input.split("\\s")));
+		if (respParts.size() != 2) return "Invalid rmFolder arguments";
+		String mailbox = respParts.get(1);
+		
+		try {
+			if (EditEmail.deleteMailbox(client, mailbox))
+				resp = "Mailbox deleted";
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
+		}
+		return resp;
+	}
+	
+	private String nameFolder(String input) {
+		String resp = "Invalid nameFolder command";
+		ArrayList<String> respParts = new ArrayList<String>(Arrays.asList(input.split("\\s")));
+		if (respParts.size() != 3) return "Invalid nameFolder arguments";
+		String mailbox = respParts.get(1);
+		String newname = respParts.get(2);
+		
+		try {
+			if (EditEmail.renameMailbox(client, mailbox, newname))
+				resp = "Mailbox renamed";
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
+		}
+		return resp;
+	}
+	
+	private String mvEmail(String input, String emailId) {
+		String resp = "Invalid mvEmail command";
+		ArrayList<String> inputParts = new ArrayList<String>(Arrays.asList(input.split("\\s")));
+		if (inputParts.size() < 2) return "Invalid argument. Enter mvemail <mailbox>";
+		String mailbox = String.join(" ", inputParts.subList(1, inputParts.size()));
+		
+		try {
+			if (EditEmail.moveEmail(client, emailId, mailbox))
+				resp = "Mailbox renamed";
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
+		}
+		return resp;
+	}
+	
+	private String rmEmail(String emailId) {
+		String resp = "Invalid nameFolder command";
+		try {
+			if (EditEmail.deleteEmail(client, emailId))
+				resp = "Mailbox deleted";
+		} catch (ClientRequestException e) {
+			resp = e.getMessage();
+		}
+		return resp;
+	}
+	
 	private HashMap<String, String> generateCmdList() {
 		HashMap<String, String> result = new HashMap<String, String>();
 		result.put("?", 		"? 									Gets a list of valid commands and arguments");
@@ -346,7 +435,9 @@ public class CLI {
 		result.put("update", 	"update 							Forces an update with the server");
 		result.put("view", 		"view [read | unread] [<mailbox>] 	views a list of all emails, or a list of only read emails, or a list of only unread emails and display an email from the resulting set");
 		result.put("send", 		"send								Enters a dialogue for sending an email");
-		
+		result.put("mkfolder", 	"mkfolder <mailbox>					Creates a mailbox with the specified name");
+		result.put("rmfolder", 	"rmfolder <mailbox>					Deleted a mailbox with the specified name");
+		result.put("namefolder","namefolder <mailbox> <mailbox>		renames a mailbox with the specified name to a new name");
 		return result;
 	}
 	private void print(String s) {
@@ -354,6 +445,7 @@ public class CLI {
 		System.out.flush();
 	}
 	
+	@SuppressWarnings("unused")
 	private void printv(String s) {
 		if (verbose) System.out.println("\n" + s + "\n");
 		System.out.flush();
