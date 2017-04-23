@@ -118,8 +118,20 @@ public class AdeptConnection {
 					return false;
 				}
 			} else if (p == Authenticate.proto.SMTP) {
-				/* No SMTP authentication, we only use IMAP on both ports */
-				throw new ClientRequestException("Authentication error: SMTP authentication not supported.");
+				//We use IMAP authentication on an SMTP connection
+				//It's cheating, but SMTP auth strings are a pain
+				String authString = String.format("LOGIN %s %s", uname, pword);
+				String resp = sendMsg(authString.getBytes());
+				switch (resp) {
+				case "OK - User Authenticated":
+					return true;
+				case "NO - Login failure: Invalid username or password":
+					throw new ClientRequestException("Invalid username or password");
+				case "BAD - Invalid or unknown command":
+					throw new ClientRequestException("Invalid or unknown command");
+				default:
+					return false;
+				}
 			} else {
 				throw new ClientRequestException("Authentication error: Invalid authentication type.");
 			}
@@ -128,7 +140,7 @@ public class AdeptConnection {
 		}
 	}
 	
-	private String sendMsg(String msg) throws ClientRequestException {
+	public String sendMsg(String msg) throws ClientRequestException {
 		return sendMsg(msg.getBytes());
 	}
 	

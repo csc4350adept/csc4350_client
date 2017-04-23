@@ -320,20 +320,17 @@ public class CLI {
 			emailData.put("subject", stdin.nextLine().trim());
 		
 		print("Enter body, terminated with a \".\" on a single line");
-		System.out.print("\n" + cliString + "-send> ");
-		System.out.flush();
 		ArrayList<String> bodyInput = new ArrayList<String>();
 		while (stdin.hasNextLine()) {
 			String line = stdin.nextLine().trim();
 			if (line.equals(".")) break;
 			bodyInput.add(line);
-			System.out.print("\n" + cliString + "-send> ");
-			System.out.flush();
 		}
 		emailData.put("body", String.join("\n", bodyInput));
 		
 		try {
-			EditEmail.sendEmail(client, emailData.get("date"), emailData.get("to"), emailData.get("from"), emailData.get("subject"), emailData.get("body"));
+			if(EditEmail.sendEmail(client, emailData.get("date"), emailData.get("to"), emailData.get("from"), emailData.get("subject"), emailData.get("body")))
+				resp = "Email sent";
 		} catch (ClientRequestException e) {
 			resp = "Server command failed " + e.getMessage();
 		}

@@ -29,21 +29,24 @@ public class EditEmail {
 		String msg;
 		AdeptConnection c = null;
 		try {
-			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getIMAP(client.getAuth().getUname()), Authenticate.proto.IMAP);
+			c = new AdeptConnection(client, client.getServer(client.getAuth().getUname()), client.getSMTP(client.getAuth().getUname()), Authenticate.proto.SMTP);
+			
+			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
 			msg = String.format("MAIL FROM: %s", client.getAuth().getUname());
-			resp = c.request(msg);
+			resp = c.sendMsg(msg);
 			if (!resp.equals("250 OK")) throw new ClientRequestException(resp);
 			
 			//Loop if multiple recipients
 			for (String rcpt : to.split("(\\s|\\s,|,|,\\s|\\s,\\s)")) {
+				if (rcpt.trim().isEmpty()) continue;
 				msg = String.format("RCPT TO: %s", rcpt);
-				resp = c.request(msg);
+				resp = c.sendMsg(msg);
 				if (!resp.equals("250 OK")) throw new ClientRequestException(resp);
 			}
 
 			msg = "DATA";
-			resp = c.request(msg);
+			resp = c.sendMsg(msg);
 			if (!resp.equals("354 Send message content; end with <CRLF>.<CRLF>")) throw new ClientRequestException(resp);
 			
 			ArrayList<String> emailData = new ArrayList<String>();
@@ -56,7 +59,7 @@ public class EditEmail {
 			emailData.add("\r\n.\r\n");
 			
 			msg = String.join("\r\n", emailData);
-			resp = c.request(msg);
+			resp = c.sendMsg(msg);
 			if (!resp.equals("250 OK")) throw new ClientRequestException(resp);
 			c.close();
 		} catch (ClientRequestException e) {

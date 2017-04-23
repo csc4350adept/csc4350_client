@@ -59,7 +59,7 @@ public class Update {
 							if(headerParts.length == 2) {
 								String field = headerParts[0].toLowerCase();
 								String value = headerParts[1];
-								if (validDatas.contains(field)) emailData.put(field, value);
+								if (validDatas.contains(field)) emailData.put(field, value.replace("'", "''"));
 							}
 						}
 						
@@ -70,7 +70,7 @@ public class Update {
 					resp = c.request(msg);
 					if (resp.startsWith(okString) && resp.length() > okString.length()) {
 						String body = resp.substring(okString.length(), resp.length()).trim();
-						emailData.put("body", body);
+						emailData.put("body", body.replace("'", "''"));
 					}
 
 					//Get whether it is read or unread
