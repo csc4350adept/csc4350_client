@@ -45,7 +45,6 @@ public class Login{
 			submitCredentials.setOnAction(new EventHandler<ActionEvent>() {
 			    @Override public void handle(ActionEvent e) {
 			        Boolean authenticated = false;
-			    	submitCredentials.setDisable(true);
 			    	if (userName_Field.getText().length() < 1) {
 			    		Alert userNameAlert = new Alert(AlertType.ERROR);
 			    		userNameAlert.setTitle("Login error");
@@ -61,6 +60,7 @@ public class Login{
 
 				    		pwAlert.showAndWait();
 			    	} else {
+				    	submitCredentials.setDisable(true);
 				        submitCredentials.setText("Validating...");
 				        
 						try {
