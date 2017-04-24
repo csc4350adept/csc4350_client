@@ -1,3 +1,6 @@
+import javafx.stage.Stage;
+import javafx.application.Application;
+
 public class Main {
 
 	public static void main(String[] args) {
@@ -22,7 +25,7 @@ public class Main {
 			CLI cmdLine = new CLI(c, verbose);
 			cmdLine.init();
 		} else {
-			//Paul, start your GUI here
+			Application.launch(UI.class, args);
 		}
 		
 		/*
