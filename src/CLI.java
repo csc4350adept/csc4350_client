@@ -427,7 +427,7 @@ public class CLI {
 		
 		try {
 			if (EditEmail.moveEmail(client, emailId, mailbox))
-				resp = "Mailbox renamed";
+				resp = "Email moved";
 		} catch (ClientRequestException e) {
 			resp = e.getMessage();
 		}

@@ -121,7 +121,7 @@ public class EditEmail {
 			
 			if (!c.authenticate()) throw new ClientRequestException("Authentication failed");
 			
-			msg = String.format("CREATE \"%s\" \"%s\"", mailbox.replace("\"", "'"), newName.replace("\"", "'"));
+			msg = String.format("RENAME \"%s\" \"%s\"", mailbox.replace("\"", "'"), newName.replace("\"", "'"));
 			resp = c.sendMsg(msg);
 			if (!resp.startsWith("OK")) throw new ClientRequestException(resp);
 			c.close();

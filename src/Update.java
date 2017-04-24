@@ -10,15 +10,20 @@ public class Update {
 		String resp;
 		SQLiteInterface db = client.getDB();
 		
+		ArrayList<String> extraUpdates = new ArrayList<String>();
+		
 		try {
 			msg = String.format("LIST %s", uName);
 			resp = c.request(msg);
 			HashMap<String, String> emailsMailboxes = new HashMap<String, String>();
+			ArrayList<String> remoteMailboxes = new ArrayList<String>();
+			ArrayList<String> remoteEmails = new ArrayList<String>();
 			
 			//Get mailboxes
 			if (resp.startsWith("OK - List Completed") && resp.split("\n").length > 1) {
 				ArrayList<String> mailboxes = new ArrayList<String>(Arrays.asList(Arrays.copyOfRange(resp.split("\n"), 1, resp.split("\n").length)));
 				for (String mailbox : mailboxes) {
+					remoteMailboxes.add(mailbox);
 					//Update local db with new mailboxes
 					if (!db.mailboxExists(mailbox, uName)) db.createMailbox(mailbox, uName);
 					//Get email_ids
@@ -28,14 +33,21 @@ public class Update {
 						ArrayList<String> email_ids = new ArrayList<String>(Arrays.asList(Arrays.copyOfRange(resp.split("\n"), 1, resp.split("\n").length)));
 						for (String email_id : email_ids) {
 							emailsMailboxes.put(email_id, db.getMailboxID(mailbox, uName));
+							remoteEmails.add(email_id);
 						}
 					}
 				}
 			}
 			
-			
 			//Get list of local emails
 			ArrayList<String> localEmails = db.getEmailIds(uName);
+			
+			//Make sure mailboxes are up to date
+			for (String localEmail : localEmails) {
+				String curMailbox = db.getEmailMailbox(localEmail);
+				String canonMailbox = emailsMailboxes.get(localEmail);
+				if (!curMailbox.equals(canonMailbox)) extraUpdates.add(localEmail);
+			}
 			
 			ArrayList<String> failures = new ArrayList<String>();
 			boolean failed = false;
@@ -46,8 +58,8 @@ public class Update {
 				emailData.put("mailbox", mailbox);
 				String okString = "OK - fetch completed";
 				
-				//If we don't have this email locally, fetch it and store it
-				if (!localEmails.contains(email_id)) {
+				//If we don't have this email locally, or it needs an update, fetch it and store it
+				if (!localEmails.contains(email_id) || extraUpdates.contains(email_id)) {
 					msg = String.format("FETCH %s BODY[HEADER]", email_id);
 					resp = c.request(msg);
 					//Get the headers
@@ -107,6 +119,22 @@ public class Update {
 							}
 						}
 					}
+				}
+			}
+			
+			//Delete emails that shouldn't exist anymore
+			for (String localEmail : localEmails) {
+				if (!remoteEmails.contains(localEmail)) {
+					db.deleteEmail(localEmail);
+				}
+			}
+			
+			//Delete mailboxes that shouldn't exist anymore
+			ArrayList<String> localMailboxes = db.getAllMailboxNames(uName);
+			for (String localMailbox : localMailboxes) {
+				if (!remoteMailboxes.contains(localMailbox)) {
+					String mailbox_id = db.getMailboxID(localMailbox, client.getUname());
+					db.deleteMailbox(mailbox_id);
 				}
 			}
 			if (!failed) return true;

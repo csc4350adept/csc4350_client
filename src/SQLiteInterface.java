@@ -162,6 +162,33 @@ public class SQLiteInterface {
 		return false;
 	}
 	
+	public boolean deleteEmail(String email_id) throws ClientRequestException {
+		if (!emailExists(email_id)) return true;
+		String sql = String.format("delete from emails where email_id=%s", email_id);
+		try {
+			Statement msg = c.createStatement();
+			msg.executeQuery(sql);
+		} catch (SQLException e) {
+			if (e.getMessage().equals("query does not return ResultSet")) return true;
+			throw new ClientRequestException("SQL Exception: " + e.getMessage());
+		}
+		return false;
+	}
+	
+	public boolean deleteMailbox(String mailbox_id) throws ClientRequestException {
+		if (!mailboxExists(mailbox_id)) return true;
+		String sql = String.format("delete from mailboxes where mailbox_id=%s", mailbox_id);
+		try {
+			Statement msg = c.createStatement();
+			msg.executeQuery(sql);
+		} catch (SQLException e) {
+			if (e.getMessage().equals("query does not return ResultSet")) return true;
+			throw new ClientRequestException("SQL Exception: " + e.getMessage());
+		}
+		return false;
+	}
+	
+	
 	
 	
 	public boolean setIMAP(String uname, String pword, int imap) throws ClientRequestException {
@@ -463,6 +490,22 @@ public class SQLiteInterface {
 		if (mailboxes.size() > 0) return true;
 		else return false;
 	}
+	
+	public boolean mailboxExists(String mailbox_id) {
+		ArrayList<String> mailboxes = new ArrayList<String>();
+		String sql = String.format("select mailbox_id from mailboxes where mailbox_id=%s", mailbox_id);
+		try {
+			Statement msg = c.createStatement();
+			ResultSet resp = msg.executeQuery(sql);
+			String emailId;
+			while (resp.next() && (emailId = resp.getString("mailbox_id")) != null)
+				mailboxes.add(emailId);
+		} catch (SQLException e) {
+			//Nothing
+		}
+		if (mailboxes.size() > 0) return true;
+		else return false;
+	}
 
 	public ArrayList<String> getAllMailboxNames(String uName) throws ClientRequestException {
 		ArrayList<String> mailboxes = new ArrayList<String>();
@@ -537,6 +580,11 @@ public class SQLiteInterface {
 				}
 				String fieldsString = String.join(", ", fields);
 				String valuesString = String.join(", ", values);
+				//Get rid of it if it exists
+				if(emailExists(emailData.get("email_id"))) {
+					deleteEmail(emailData.get("email_id"));
+				}
+				
 				String sql = String.format("insert into emails (%s) values (%s)", fieldsString, valuesString);
 				try {
 					Statement msg = c.createStatement();
@@ -550,5 +598,22 @@ public class SQLiteInterface {
 			throw e;
 		}
 			return false;
+		}
+	
+		public boolean emailExists(String search_id) {
+			ArrayList<String> email_ids = new ArrayList<String>();
+			String sql = String.format("select email_id from emails where email_id=%s", search_id);
+			try {
+				Statement msg = c.createStatement();
+				ResultSet resp = msg.executeQuery(sql);
+				String email_id;
+				while (resp.next() && (email_id = resp.getString("email_id")) != null)
+					email_ids.add(email_id);
+			} catch (SQLException e) {
+				//Nothing
+				System.out.println(e.getMessage());
+			}
+			if (email_ids.size() > 0) return true;
+			else return false;
 		}
 }
