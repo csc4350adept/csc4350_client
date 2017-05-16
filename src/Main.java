@@ -1,6 +1,3 @@
-import javafx.stage.Stage;
-import javafx.application.Application;
-
 public class Main {
 
 	public static void main(String[] args) {
@@ -25,7 +22,7 @@ public class Main {
 			CLI cmdLine = new CLI(c, verbose);
 			cmdLine.init();
 		} else {
-			Application.launch(UI.class, args);
+			System.out.println("UI is not available yet");
 		}
 		
 		/*

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Client {
-	private String defaultServer = "localhost";
+	private String defaultServer = "138.197.104.156";
 	private int defaultIMAPPort = 993;
 	private int defaultSMTPPort = 465;
 	private String defaultUserKey = "ABC";
